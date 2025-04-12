@@ -23,6 +23,7 @@ export default function MapPanel() {
   const activeSidePanel = useLayoutStore((state) => state.activeSidePanel);
   const position: LatLngExpression = [46.052091, 14.468414];
   const [sidebarWidth, setSidebarWidth] = useState(400);
+  const [chatSidebarWidth, setChatSidebarWidth] = useState(400);
 
   // Move the message calls into a useEffect hook that runs once on mount
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function MapPanel() {
               }
             }}
             onResizeStop={(e, direction, ref, d) => {
-              setSidebarWidth(sidebarWidth + d.width);
+              setSidebarWidth(parseInt(ref.style.width, 10));
             }}
             className="border-r"
           >
@@ -93,9 +94,43 @@ export default function MapPanel() {
             <Map position={position} />
           </div>
         </div>
-        <div className="w-3/12 h-full border-l overflow-y-auto">
-          <Chat />
-        </div>
+        <Resizable
+          size={{ width: chatSidebarWidth, height: '100%' }}
+          minWidth={250}
+          maxWidth={800}
+          enable={{ 
+            top: false, 
+            right: false, 
+            bottom: false, 
+            left: true,
+            topRight: false, 
+            bottomRight: false, 
+            bottomLeft: false, 
+            topLeft: false 
+          }}
+          handleClasses={{
+            left: 'handle-left'
+          }}
+          handleStyles={{
+            left: {
+              width: '10px',
+              left: '-5px',
+              cursor: 'col-resize',
+              backgroundColor: 'transparent'
+            }
+          }}
+          onResizeStop={(e, direction, ref, d) => {
+            setChatSidebarWidth(parseInt(ref.style.width, 10));
+          }}
+          className="border-l"
+        >
+          <div 
+            className="h-full overflow-y-auto"
+            style={{ width: `${chatSidebarWidth}px` }}
+          >
+            <Chat />
+          </div>
+        </Resizable>
       </div>
     </div>
   );
