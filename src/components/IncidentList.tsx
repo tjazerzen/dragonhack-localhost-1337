@@ -13,7 +13,7 @@ export default function IncidentList() {
   const incidents = useIncidentStore((state) => state.incidents);
 
   return (
-    <div className="h-full bg-white">
+    <div className="bg-white">
       <div className="p-4 border-b">
         <h2 className="text-xl font-semibold">Incidents</h2>
         <div className="flex justify-between mt-4">

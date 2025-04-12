@@ -1,4 +1,5 @@
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import RecButton from '@/components/RecButton';
 
 export default function NavBar() {
   return (
@@ -6,6 +7,7 @@ export default function NavBar() {
       <div className="">
         <SidebarTrigger className='hover:cursor-pointer mt-1' />
       </div>
+      <RecButton />
     </nav>
   );
 }

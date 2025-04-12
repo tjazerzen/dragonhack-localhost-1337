@@ -1,14 +1,24 @@
 'use client';
 
 import { useChatStore } from '@/store/chatStore';
-
+import { useEffect, useRef } from 'react';
+import { Message } from '@/store/chatStore';
 
 export default function Chat() {
-  const messages = useChatStore((state) => state.messages);
-  
+  const {messages} = useChatStore();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages.length]);
+
   return (
     <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto">
-      {messages.map((message) => (
+      {messages.map((message: Message) => (
         <div
           key={message.id}
           className={`flex ${
@@ -22,13 +32,19 @@ export default function Chat() {
                 : 'bg-gray-200 text-gray-800'
             }`}
           >
-            <p className="text-sm">{message.content}</p>
+            <p className="text-sm">
+              {message.content}
+              {!message.isComplete && (
+                <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
+              )}
+            </p>
             <p className="text-xs mt-1 opacity-70">
               {message.timestamp.toLocaleTimeString()}
             </p>
           </div>
         </div>
       ))}
+      <div ref={messagesEndRef} />
     </div>
   );
 }
