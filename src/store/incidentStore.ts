@@ -1,14 +1,19 @@
 import { create } from 'zustand';
 import { Incident } from '@/types/incidents';
+import type { GeocodingResult } from '@/lib/geocoding';
 
 interface IncidentStore {
   incidents: Incident[];
   selectedIncidentId: string | null;
   isAddingIncident: boolean;
+  extractedLocation: string | null;
+  extractedCoordinates: GeocodingResult | null;
   selectIncident: (id: string | null) => void;
   startAddingIncident: () => void;
   cancelAddingIncident: () => void;
   addIncident: (incident: Omit<Incident, 'id' | 'timestamp'> & { coordinates: [number, number] }) => void;
+  setExtractedLocation: (location: string | null) => void;
+  setExtractedCoordinates: (coordinates: GeocodingResult | null) => void;
 }
 
 // Sample incident data
@@ -294,22 +299,26 @@ export const useIncidentStore = create<IncidentStore>()((set, get) => ({
   incidents: sampleIncidents,
   selectedIncidentId: null,
   isAddingIncident: false,
+  extractedLocation: null,
+  extractedCoordinates: null,
   selectIncident: (id) => set({ selectedIncidentId: id }),
   startAddingIncident: () => set({ isAddingIncident: true }),
   cancelAddingIncident: () => set({ isAddingIncident: false }),
+  setExtractedLocation: (location) => set({ extractedLocation: location }),
+  setExtractedCoordinates: (coordinates) => set({ extractedCoordinates: coordinates }),
   addIncident: (incidentData) => {
     const { incidents } = get();
-    
+
     // Generate a new ID based on the highest current ID
     const highestId = Math.max(...incidents.map(inc => parseInt(inc.id)));
     const newId = (highestId + 1).toString();
-    
-    const timestamp = new Date().toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+
+    const timestamp = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     });
-    
+
     const newIncident: Incident = {
       id: newId,
       type: incidentData.type,
@@ -321,7 +330,7 @@ export const useIncidentStore = create<IncidentStore>()((set, get) => ({
       noPoliceSupport: incidentData.noPoliceSupport,
       noFirefighterSupport: incidentData.noFirefighterSupport
     };
-    
+
     set({
       incidents: [...incidents, newIncident],
       isAddingIncident: false
