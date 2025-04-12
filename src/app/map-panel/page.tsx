@@ -14,7 +14,7 @@ const Map = dynamic(() => import('@/components/Map'), {
 
 export default function MapPanel() {
   const addMessage = useChatStore((state) => state.addMessage);
-  const position: LatLngExpression = [51.505, -0.09];
+  const position: LatLngExpression = [46.052091, 14.468414];
 
   // Add an admin message
   addMessage('Hello, how can I help you?', 'admin');

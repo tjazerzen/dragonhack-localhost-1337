@@ -11,6 +11,7 @@ const statusConfig: Record<IncidentStatus, { color: string; icon: IconType }> = 
 
 export default function IncidentList() {
   const incidents = useIncidentStore((state) => state.incidents);
+  const selectIncident = useIncidentStore((state) => state.selectIncident);
 
   return (
     <div className="h-full bg-white">
@@ -43,6 +44,7 @@ export default function IncidentList() {
             <div
               key={incident.id}
               className="p-4 border-b hover:bg-gray-50 cursor-pointer"
+              onClick={() => selectIncident(incident.id)}
             >
               <div className="flex items-start gap-3">
                 <StatusIcon className={`mt-1 ${statusConfig[incident.status].color}`} />

@@ -1,8 +1,8 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, createContext, useContext } from 'react';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import { useIncidentStore } from '@/store/incidentStore';
@@ -63,11 +63,44 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, isLoadi
   </div>
 );
 
+// Create a context for marker references
+const MarkerContext = createContext<React.MutableRefObject<Record<string, L.Marker>>>({
+  current: {}
+});
+
+// Map controller component to handle programmatic interactions
+function MapController() {
+  const map = useMap();
+  const selectedIncidentId = useIncidentStore((state) => state.selectedIncidentId);
+  const incidents = useIncidentStore((state) => state.incidents);
+  const markerRefs = useContext(MarkerContext);
+
+  useEffect(() => {
+    if (selectedIncidentId) {
+      const incident = incidents.find(inc => inc.id === selectedIncidentId);
+      if (incident) {
+        // Center map on the incident
+        map.setView(incident.coordinates, 15);
+        
+        // Open the popup for this marker
+        const marker = markerRefs.current[selectedIncidentId];
+        if (marker) {
+          marker.openPopup();
+        }
+      }
+    }
+  }, [selectedIncidentId, incidents, map, markerRefs]);
+
+  return null;
+}
+
 export default function Map({ position }: MapProps) {
   const incidents = useIncidentStore((state) => state.incidents);
+  const selectIncident = useIncidentStore((state) => state.selectIncident);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const markerRefs = useRef<Record<string, L.Marker>>({});
 
   useEffect(() => {
     // @ts-expect-error - Leaflet types are not properly set up for Next.js
@@ -85,6 +118,9 @@ export default function Map({ position }: MapProps) {
       lat: incident.coordinates[0],
       lng: incident.coordinates[1]
     });
+
+    // Update the selected incident in the store
+    selectIncident(incident.id);
 
     try {
       setSelectedIncident(incident);
@@ -114,41 +150,45 @@ export default function Map({ position }: MapProps) {
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full overflow-hidden relative">
-      <MapContainer 
-        center={position} 
-        zoom={13} 
-        scrollWheelZoom={true}
-        style={{ height: '100%', width: '100%' }}
-        className="h-full w-full z-0"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        />
-        {incidents.map((incident) => (
-          <Marker
-            key={incident.id}
-            position={incident.coordinates}
-            icon={L.icon({
-              iconUrl: statusIcons[incident.status],
-              iconSize: [24, 24],
-              iconAnchor: [12, 12],
-              popupAnchor: [0, -12],
-            })}
-            eventHandlers={{
-              click: () => handleMarkerClick(incident),
-            }}
-          >
-            <Popup className="rounded-lg shadow-lg border border-gray-200">
-              <PopupContent 
-                incident={incident} 
-                photoUrl={photoUrls[incident.id]} 
-                isLoading={isLoading && selectedIncident?.id === incident.id}
-              />
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <MarkerContext.Provider value={markerRefs}>
+        <MapContainer 
+          center={position} 
+          zoom={13} 
+          scrollWheelZoom={true}
+          style={{ height: '100%', width: '100%' }}
+          className="h-full w-full z-0"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          />
+          <MapController />
+          {incidents.map((incident) => (
+            <Marker
+              key={incident.id}
+              position={incident.coordinates}
+              icon={L.icon({
+                iconUrl: statusIcons[incident.status],
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12],
+              })}
+              eventHandlers={{
+                click: () => handleMarkerClick(incident),
+                add: (e) => markerRefs.current[incident.id] = e.target,
+              }}
+            >
+              <Popup className="rounded-lg shadow-lg border border-gray-200">
+                <PopupContent 
+                  incident={incident} 
+                  photoUrl={photoUrls[incident.id]} 
+                  isLoading={isLoading && selectedIncident?.id === incident.id}
+                />
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </MarkerContext.Provider>
     </div>
   );
 } 
