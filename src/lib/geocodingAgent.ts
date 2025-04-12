@@ -6,6 +6,8 @@ import {
     MessagesPlaceholder,
 } from "@langchain/core/prompts";
 import { geocodeTool, type GeocodingResult } from "./geocoding"; // Import type
+import { RunnableSequence } from "@langchain/core/runnables";
+import { HumanMessage } from "@langchain/core/messages";
 
 // Zod schema for validation
 const GeocodingResultSchema = z.object({
@@ -24,10 +26,17 @@ const model = new ChatGoogleGenerativeAI({
 const tools = [geocodeTool];
 
 // 3. Create the Agent Prompt
-// Adjusted prompt to explicitly ask for JSON output
+// *** Updated Prompt for Transcript Analysis ***
 const prompt = ChatPromptTemplate.fromMessages([
-    ["system", "You are a helpful assistant that uses tools to find geographic coordinates for a given location. Only use the tools provided. Respond with the final coordinates in JSON format (e.g., {{\"lat\": 46.05, \"lng\": 14.51}}) or an error message if geocoding fails."],
-    ["human", "{input}"],
+    ["system", `You are an assistant that analyzes conversation transcripts to find geographic coordinates.
+- First, carefully read the transcript and identify the single, most specific street address or place name mentioned that can be used for geocoding.
+- If a specific, geocodable location is identified, use the 'google_maps_geocoder' tool with that exact location string.
+- If no specific location is found, or the location is too vague (e.g., "near the park", "downtown"), respond with the text "No specific location found".
+- Only use the tools provided. Do not make up information.
+- Respond ONLY with the JSON coordinates (e.g., {{"lat": 46.05, "lng": 14.51}}) if the tool is used successfully, or the exact text "No specific location found" otherwise.`
+    ],
+    // Use "transcript" as the input key
+    ["human", "Analyze this transcript:\n\n{transcript}"],
     new MessagesPlaceholder("agent_scratchpad"),
 ]);
 
@@ -43,7 +52,7 @@ const agent = await createToolCallingAgent({
 const agentExecutor = new AgentExecutor({
     agent,
     tools,
-    verbose: true,
+    verbose: true, // Keep verbose for debugging
 });
 
 // Helper type guard
@@ -52,20 +61,30 @@ const agentExecutor = new AgentExecutor({
 // }
 
 // 6. Define the function to run the agent
+// *** Renamed and updated function signature ***
 /**
- * Takes a location string and uses the geocoding agent to find coordinates.
- * @param location The street address or place name to geocode.
- * @returns A promise that resolves to the GeocodingResult object or null if unsuccessful.
+ * Takes a conversation transcript and uses an agent to identify a location
+ * within it and fetch its coordinates using the geocoding tool.
+ * @param transcript The full conversation transcript.
+ * @returns A promise that resolves to the GeocodingResult object or null if unsuccessful or no location found.
  */
-export async function runGeocodingAgent(location: string): Promise<GeocodingResult | null> {
-    console.log(`(Agent) Invoking geocoding agent for: "${location}"`);
+export async function extractAndGeocodeViaAgent(transcript: string): Promise<GeocodingResult | null> {
+    console.log(`(Agent) Invoking geocoding agent with transcript...`);
     try {
         const result = await agentExecutor.invoke({
-            input: location,
+            // Pass the transcript to the input key defined in the prompt
+            transcript: transcript,
         });
 
         console.log("(Agent) Raw Result:", result);
 
+        // Check if the output is the specific string indicating no location
+        if (typeof result.output === 'string' && result.output.trim() === "No specific location found") {
+            console.log("(Agent) Agent indicated no specific location found.");
+            return null;
+        }
+
+        // Attempt to parse and validate if it's not the "not found" message
         if (typeof result.output === 'string') {
             try {
                 let jsonString = result.output.trim();
@@ -73,37 +92,33 @@ export async function runGeocodingAgent(location: string): Promise<GeocodingResu
                 const match = jsonString.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
 
                 if (match && match[1]) {
-                    // If fences are found, use the captured content
                     jsonString = match[1].trim();
                     console.log("(Agent) Extracted JSON from fences:", jsonString);
                 } else {
-                    // If no fences, assume the string might be the JSON directly
                     console.log("(Agent) No fences detected, attempting direct parse:", jsonString);
                 }
 
-                const parsedJson = JSON.parse(jsonString); // Parse first
-                const validationResult = GeocodingResultSchema.safeParse(parsedJson); // Then validate with Zod
+                const parsedJson = JSON.parse(jsonString);
+                const validationResult = GeocodingResultSchema.safeParse(parsedJson);
 
                 if (validationResult.success) {
                     console.log("(Agent) Parsed & Validated Coordinates:", validationResult.data);
-                    return validationResult.data; // Return the validated data
+                    return validationResult.data;
                 } else {
                     console.warn("(Agent) Zod validation failed:", validationResult.error.errors);
                 }
             } catch (parseError) {
                 console.warn("(Agent) Failed to parse agent output as JSON:", result.output, parseError);
-                // Could add fallback parsing for "lat, lng" string here if needed
             }
         } else {
             console.error("(Agent) Unexpected result format (output not a string):", result);
         }
 
-        // If parsing/validation failed or output wasn't a string
         return null;
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown agent execution error";
-        console.error(`(Agent) Error invoking agent for "${location}":`, error);
-        return null; // Return null on agent execution error
+        console.error(`(Agent) Error invoking agent with transcript:`, error);
+        return null;
     }
 } 

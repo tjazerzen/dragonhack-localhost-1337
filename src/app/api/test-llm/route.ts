@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
 // import { model } from '@/lib/llm'; // No longer directly needed here
-import { extractLocationFromMessages, type Message } from '@/lib/locationExtractor';
-// import { geocodeTool } from '@/lib/geocoding'; // No longer needed here
-import { runGeocodingAgent } from '@/lib/geocodingAgent'; // Import the agent runner
+// Remove locationExtractor import
+// import { extractLocationFromMessages, type Message } from '@/lib/locationExtractor';
+import type { Message } from '@/lib/locationExtractor'; // Keep Message type if needed elsewhere
+// Import the new agent function
+import { extractAndGeocodeViaAgent } from '@/lib/geocodingAgent';
 import type { GeocodingResult } from '@/lib/geocoding'; // Import the type for checking
 // Import the accident report agent
 import { generateAccidentReport, type AccidentReport } from '@/lib/accidentReportAgent';
 
-// GET handler to test location extraction, geocoding agent, and accident report agent
+// GET handler to test combined geocoding agent and accident report agent
 export async function GET() {
     try {
-        console.log("Testing Location Extraction, Geocoding Agent, and Accident Report Agent...");
+        console.log("Testing Combined Geocoding Agent and Accident Report Agent...");
 
         // Original example messages
         const exampleMessages: Message[] = [
@@ -30,32 +32,22 @@ export async function GET() {
             .join("\n");
 
         // --- Run the agents --- 
-        let location: string | undefined = undefined;
+        // Remove location variable
+        // let location: string | undefined = undefined;
         let geocodingResult: GeocodingResult | null = null;
         let accidentReport: AccidentReport | null = null;
 
-        // 1. Extract Location
+        // 1. Call the Combined Geocoding Agent
         try {
-            location = await extractLocationFromMessages(exampleMessages);
-            console.log("Extracted Location String:", location);
+            console.log("Invoking combined geocoding agent with transcript...");
+            geocodingResult = await extractAndGeocodeViaAgent(transcript);
+            console.log("Geocoding Agent Result (object or null):", geocodingResult);
         } catch (error) {
-            console.error("Error during location extraction:", error);
+            console.error("Error during geocoding agent execution:", error);
             // Allow request to continue
         }
 
-        // 2. Call Geocoding Agent (only if location was extracted)
-        if (location) {
-            try {
-                console.log(`Invoking geocoding agent with: "${location}"`);
-                geocodingResult = await runGeocodingAgent(location);
-                console.log("Geocoding Agent Result (object or null):", geocodingResult);
-            } catch (error) {
-                console.error("Error during geocoding agent execution:", error);
-                // Allow request to continue
-            }
-        }
-
-        // 3. Generate Accident Report
+        // 2. Generate Accident Report (remains the same)
         try {
             console.log("Invoking accident report agent...");
             accidentReport = await generateAccidentReport(transcript);
@@ -65,11 +57,12 @@ export async function GET() {
             // Allow request to continue
         }
 
-        // 4. Return the combined results
+        // 3. Return the combined results
         return NextResponse.json({
-            success: true, // Indicate the API route itself succeeded
-            extracted_location: location || null,
-            geocoding_result: geocodingResult, // Will be null if extraction failed or geocoding failed
+            success: true,
+            // Remove extracted_location field
+            // extracted_location: location || null,
+            geocoding_result: geocodingResult, // Result comes directly from the agent now
             accident_report: accidentReport, // Will be null if generation failed
         });
 
