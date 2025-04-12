@@ -545,7 +545,7 @@ function MapContent({
           position={force.coordinates}
           icon={L.icon({
             iconUrl: forceIcons[force.type][force.status],
-            iconSize: [22, 22],
+            iconSize: [33, 33],
             iconAnchor: [11, 11],
             popupAnchor: [0, -11],
           })}
