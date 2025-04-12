@@ -586,8 +586,10 @@ export default function Map({ position }: MapProps) {
   const [forceSearchText, setForceSearchText] = useState('');
   const [selectedForceTypes, setSelectedForceTypes] = useState<ForceType[]>([]);
   const [selectedForceStatuses, setSelectedForceStatuses] = useState<ForceStatus[]>([]);
-  const [isMovementEnabled, setIsMovementEnabled] = useState(true);
-  const [showMotionTrails, setShowMotionTrails] = useState(false);
+  
+  // Always enable movement and motion trails (removed toggles)
+  const isMovementEnabled = true;
+  const showMotionTrails = true;
   
   // Store force movement directions and history
   const [forceDirections, setForceDirections] = useState<Record<string, { lat: number, lng: number }>>({});
@@ -878,26 +880,6 @@ export default function Map({ position }: MapProps) {
             </button>
           </div>
         )}
-        
-        <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
-          <button 
-            className={`px-2 py-1 rounded text-white text-xs ${isMovementEnabled ? 'bg-blue-600' : 'bg-gray-600'}`}
-            onClick={() => setIsMovementEnabled(!isMovementEnabled)}
-            title={isMovementEnabled ? 'Disable unit movement' : 'Enable unit movement'}
-          >
-            {isMovementEnabled ? 'Movement: ON' : 'Movement: OFF'}
-          </button>
-        </div>
-
-        <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
-          <button 
-            className={`px-2 py-1 rounded text-white text-xs ${showMotionTrails ? 'bg-purple-600' : 'bg-gray-600'}`}
-            onClick={() => setShowMotionTrails(!showMotionTrails)}
-            title={showMotionTrails ? 'Hide motion trails' : 'Show motion trails'}
-          >
-            {showMotionTrails ? 'Trails: ON' : 'Trails: OFF'}
-          </button>
-        </div>
       </div>
       
       <MarkerContext.Provider value={markerRefs}>
