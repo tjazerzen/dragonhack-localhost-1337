@@ -1,8 +1,8 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, createContext, useContext } from 'react';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import { useIncidentStore } from '@/store/incidentStore';
@@ -19,10 +19,10 @@ const statusIcons: Record<IncidentStatus, string> = {
   resolved: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzIyQzU1RSIvPjxwYXRoIGQ9Ik04IDEyTDExIDE1TDE2IDkiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+',
 };
 
-const statusColors: Record<IncidentStatus, string> = {
-  critical: 'text-red-600',
-  moderate: 'text-orange-500',
-  resolved: 'text-green-600',
+const statusBgColors: Record<IncidentStatus, string> = {
+  critical: 'bg-red-600',
+  moderate: 'bg-orange-500',
+  resolved: 'bg-green-600',
 };
 
 interface PopupContentProps {
@@ -32,23 +32,22 @@ interface PopupContentProps {
 }
 
 const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, isLoading }) => (
-  <div className="p-2 text-sm">
-    <h3 className="font-medium">{incident.summary}</h3>
-    <p className="text-gray-500 text-xs mt-1">
-      {incident.type.replace('_', ' ').toUpperCase()} • {incident.location}
-    </p>
-    <p className="text-gray-500 text-xs">
-      {incident.timestamp} • {(incident.distance / 1000).toFixed(1)}km away
-    </p>
-    <span className={`inline-block px-2 py-0.5 rounded-full text-xs mt-2 font-medium ${statusColors[incident.status]}`}>
-      {incident.status.toUpperCase()}
-    </span>
+  <div className="w-full max-w-sm">
+    <div className="relative">
+      <div className="flex items-center justify-between border-b pb-2 mb-2">
+        <h3 className="font-medium text-lg">{incident.summary}</h3>
+        <span className={`${statusBgColors[incident.status]} text-white px-2 py-1 rounded text-xs font-bold`}>
+          {incident.status.toUpperCase()}
+        </span>
+      </div>
+    </div>
+    
     {isLoading ? (
-      <div className="mt-3 h-48 flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className="h-48 flex items-center justify-center bg-gray-100 rounded-lg">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600"></div>
       </div>
     ) : photoUrl && (
-      <div className="mt-3">
+      <div className="mb-3">
         <img 
           src={photoUrl} 
           alt="Location photo" 
@@ -60,15 +59,145 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, isLoadi
         />
       </div>
     )}
+    
+    <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+      <div>
+        <div className="text-gray-500 text-xs">Distance</div>
+        <div>{(incident.distance / 1000).toFixed(1)} km</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-xs">Type</div>
+        <div>{incident.type.replace('_', ' ')}</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-xs">Time</div>
+        <div>{incident.timestamp}</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-xs">Location</div>
+        <div>{incident.location}</div>
+      </div>
+    </div>
+    
+    <div>
+      <div className="text-gray-500 text-xs">Summary</div>
+      <p className="text-sm">
+        {incident.summary}
+      </p>
+    </div>
+    
+    <div className="mt-2 text-right">
+      <button className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs">
+        Play
+      </button>
+    </div>
   </div>
 );
 
+// Create a context for marker references
+const MarkerContext = createContext<React.MutableRefObject<Record<string, L.Marker>>>({
+  current: {}
+});
+
+// Map controller component to handle programmatic interactions
+function MapController() {
+  const map = useMap();
+  const selectedIncidentId = useIncidentStore((state) => state.selectedIncidentId);
+  const incidents = useIncidentStore((state) => state.incidents);
+  const markerRefs = useContext(MarkerContext);
+
+  useEffect(() => {
+    if (selectedIncidentId) {
+      const incident = incidents.find(inc => inc.id === selectedIncidentId);
+      if (incident) {
+        // Center map on the incident
+        map.setView(incident.coordinates, 15);
+        
+        // Open the popup for this marker
+        const marker = markerRefs.current[selectedIncidentId];
+        if (marker) {
+          marker.openPopup();
+        }
+      }
+    }
+  }, [selectedIncidentId, incidents, map, markerRefs]);
+
+  return null;
+}
+
+// MapContent component renders map elements only when the map is initialized
+function MapContent({ incidents, handleMarkerClick, photoUrls, selectedIncident, isLoading, markerRefs }: {
+  incidents: Incident[];
+  handleMarkerClick: (incident: Incident) => void;
+  photoUrls: Record<string, string | null>;
+  selectedIncident: Incident | null;
+  isLoading: boolean;
+  markerRefs: React.MutableRefObject<Record<string, L.Marker>>;
+}) {
+  const map = useMap();
+  const [isMapReady, setIsMapReady] = useState(false);
+  
+  // Set map as ready after it's properly initialized
+  useEffect(() => {
+    if (map) {
+      setIsMapReady(true);
+      // Force map to update its size after initialization
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+      
+      // Trigger additional resize
+      window.dispatchEvent(new Event('resize'));
+    }
+  }, [map]);
+  
+  if (!isMapReady) return null;
+  
+  return (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+      />
+      <MapController />
+      {incidents.map((incident) => (
+        <Marker
+          key={incident.id}
+          position={incident.coordinates}
+          icon={L.icon({
+            iconUrl: statusIcons[incident.status],
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12],
+          })}
+          eventHandlers={{
+            click: () => handleMarkerClick(incident),
+            add: (e) => markerRefs.current[incident.id] = e.target,
+          }}
+        >
+          <Popup className="rounded-lg shadow-lg border border-gray-200">
+            <PopupContent 
+              incident={incident} 
+              photoUrl={photoUrls[incident.id]} 
+              isLoading={isLoading && selectedIncident?.id === incident.id}
+            />
+          </Popup>
+        </Marker>
+      ))}
+    </>
+  );
+}
+
 export default function Map({ position }: MapProps) {
   const incidents = useIncidentStore((state) => state.incidents);
+  const selectIncident = useIncidentStore((state) => state.selectIncident);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const markerRefs = useRef<Record<string, L.Marker>>({});
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
+  // Set up Leaflet icon defaults
   useEffect(() => {
     // @ts-expect-error - Leaflet types are not properly set up for Next.js
     delete L.Icon.Default.prototype._getIconUrl;
@@ -77,6 +206,21 @@ export default function Map({ position }: MapProps) {
       iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
       shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
     });
+    
+    // Ensure map resizes when container size changes
+    const resizeObserver = new ResizeObserver(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+    
+    return () => {
+      if (mapContainerRef.current) {
+        resizeObserver.unobserve(mapContainerRef.current);
+      }
+    };
   }, []);
 
   const handleMarkerClick = async (incident: Incident) => {
@@ -85,6 +229,9 @@ export default function Map({ position }: MapProps) {
       lat: incident.coordinates[0],
       lng: incident.coordinates[1]
     });
+
+    // Update the selected incident in the store
+    selectIncident(incident.id);
 
     try {
       setSelectedIncident(incident);
@@ -113,42 +260,25 @@ export default function Map({ position }: MapProps) {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden relative">
-      <MapContainer 
-        center={position} 
-        zoom={13} 
-        scrollWheelZoom={true}
-        style={{ height: '100%', width: '100%' }}
-        className="h-full w-full z-0"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        />
-        {incidents.map((incident) => (
-          <Marker
-            key={incident.id}
-            position={incident.coordinates}
-            icon={L.icon({
-              iconUrl: statusIcons[incident.status],
-              iconSize: [24, 24],
-              iconAnchor: [12, 12],
-              popupAnchor: [0, -12],
-            })}
-            eventHandlers={{
-              click: () => handleMarkerClick(incident),
-            }}
-          >
-            <Popup className="rounded-lg shadow-lg border border-gray-200">
-              <PopupContent 
-                incident={incident} 
-                photoUrl={photoUrls[incident.id]} 
-                isLoading={isLoading && selectedIncident?.id === incident.id}
-              />
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+    <div ref={mapContainerRef} className="h-full w-full overflow-hidden relative">
+      <MarkerContext.Provider value={markerRefs}>
+        <MapContainer 
+          center={position} 
+          zoom={13} 
+          scrollWheelZoom={true}
+          style={{ height: '100%', width: '100%' }}
+          className="h-full w-full z-0"
+        >
+          <MapContent 
+            incidents={incidents}
+            handleMarkerClick={handleMarkerClick}
+            photoUrls={photoUrls}
+            selectedIncident={selectedIncident}
+            isLoading={isLoading}
+            markerRefs={markerRefs}
+          />
+        </MapContainer>
+      </MarkerContext.Provider>
     </div>
   );
 } 
