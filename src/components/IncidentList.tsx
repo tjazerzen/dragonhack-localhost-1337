@@ -56,28 +56,68 @@ export default function IncidentList() {
     };
   }, []);
 
+  // Listen for reset filters event
+  useEffect(() => {
+    const handleResetFilters = () => {
+      resetFilters();
+    };
+    
+    window.addEventListener('resetFilters', handleResetFilters);
+    
+    return () => {
+      window.removeEventListener('resetFilters', handleResetFilters);
+    };
+  }, []);
+
   // Toggle a type filter
   const toggleTypeFilter = (type: IncidentType) => {
-    setSelectedTypes(prev => 
-      prev.includes(type)
-        ? prev.filter(t => t !== type)
-        : [...prev, type]
-    );
+    const newSelectedTypes = selectedTypes.includes(type)
+      ? selectedTypes.filter(t => t !== type)
+      : [...selectedTypes, type];
+    
+    setSelectedTypes(newSelectedTypes);
+    
+    // Emit filter change event
+    window.dispatchEvent(new CustomEvent('filtersChanged', {
+      detail: {
+        searchText,
+        selectedTypes: newSelectedTypes,
+        selectedStatuses
+      }
+    }));
   };
 
   // Toggle a status filter
   const toggleStatusFilter = (status: IncidentStatus) => {
-    setSelectedStatuses(prev => 
-      prev.includes(status)
-        ? prev.filter(s => s !== status)
-        : [...prev, status]
-    );
+    const newSelectedStatuses = selectedStatuses.includes(status)
+      ? selectedStatuses.filter(s => s !== status)
+      : [...selectedStatuses, status];
+    
+    setSelectedStatuses(newSelectedStatuses);
+    
+    // Emit filter change event
+    window.dispatchEvent(new CustomEvent('filtersChanged', {
+      detail: {
+        searchText,
+        selectedTypes,
+        selectedStatuses: newSelectedStatuses
+      }
+    }));
   };
 
   // Reset all filters
   const resetFilters = () => {
     setSelectedTypes([]);
     setSelectedStatuses([]);
+    
+    // Emit filter change event
+    window.dispatchEvent(new CustomEvent('filtersChanged', {
+      detail: {
+        searchText,
+        selectedTypes: [],
+        selectedStatuses: []
+      }
+    }));
   };
 
   // Check if filters are active
@@ -107,6 +147,18 @@ export default function IncidentList() {
     
     return filtered;
   }, [incidents, searchText, selectedTypes, selectedStatuses]);
+
+  // Emit initial filter state on component mount
+  useEffect(() => {
+    // Emit filter change event with initial state
+    window.dispatchEvent(new CustomEvent('filtersChanged', {
+      detail: {
+        searchText,
+        selectedTypes,
+        selectedStatuses
+      }
+    }));
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
     <div className="h-full bg-white">
@@ -141,7 +193,19 @@ export default function IncidentList() {
               placeholder="Search a location"
               className="py-2 pl-10 pr-3 w-full border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => {
+                const newSearchText = e.target.value;
+                setSearchText(newSearchText);
+                
+                // Emit filter change event
+                window.dispatchEvent(new CustomEvent('filtersChanged', {
+                  detail: {
+                    searchText: newSearchText,
+                    selectedTypes,
+                    selectedStatuses
+                  }
+                }));
+              }}
             />
           </div>
           <div className="relative" ref={filterRef}>
