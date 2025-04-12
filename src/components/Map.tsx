@@ -16,12 +16,12 @@ import styled from 'styled-components';
 
 // Create a styled version of the Leaflet Marker with CSS transition for smooth movement
 const AnimatedMarker = styled(LeafletMarker)`
-  transition: transform 1.8s ease;
+  transition: transform 1.2s ease;
   
   /* Apply animation to Leaflet's internal marker elements */
   & .leaflet-marker-icon,
   & .leaflet-marker-shadow {
-    transition: all 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    transition: all 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
   }
 `;
 
@@ -417,14 +417,14 @@ function LeafletAnimationStyles() {
     styleEl.id = 'leaflet-marker-animations';
     styleEl.innerHTML = `
       .leaflet-marker-icon {
-        transition: transform 1.8s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                   left 1.8s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                   top 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                   left 1.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                   top 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
       }
       .leaflet-marker-shadow {
-        transition: transform 1.8s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                   left 1.8s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                   top 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+        transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                   left 1.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                   top 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
       }
     `;
     
@@ -605,11 +605,11 @@ export default function Map({ position }: MapProps) {
       
       forces.forEach(force => {
         if (force.status === 'on_road') {
-          // Random direction vector with normalized magnitude
+          // Random direction vector with normalized magnitude - 50% faster
           const angle = Math.random() * Math.PI * 2;
           initialDirections[force.id] = { 
-            lat: Math.sin(angle) * 0.0003, 
-            lng: Math.cos(angle) * 0.0003 
+            lat: Math.sin(angle) * 0.00045, // 50% faster (0.0003 * 1.5)
+            lng: Math.cos(angle) * 0.00045 
           };
           
           // Initialize history with current position
@@ -634,8 +634,8 @@ export default function Map({ position }: MapProps) {
           if (!direction) {
             const angle = Math.random() * Math.PI * 2;
             direction = { 
-              lat: Math.sin(angle) * 0.0003, 
-              lng: Math.cos(angle) * 0.0003 
+              lat: Math.sin(angle) * 0.00045,
+              lng: Math.cos(angle) * 0.00045
             };
           }
           
@@ -643,8 +643,8 @@ export default function Map({ position }: MapProps) {
           if (Math.random() < 0.05) {
             const angle = Math.random() * Math.PI * 2;
             const newDirection = {
-              lat: Math.sin(angle) * 0.0003,
-              lng: Math.cos(angle) * 0.0003
+              lat: Math.sin(angle) * 0.00045,
+              lng: Math.cos(angle) * 0.00045
             };
             
             // Smooth transition to new direction (blend old and new)
@@ -681,7 +681,7 @@ export default function Map({ position }: MapProps) {
     };
     
     // Update less frequently since we have CSS transitions to handle the animation
-    const intervalId = setInterval(moveForces, 2000);
+    const intervalId = setInterval(moveForces, 1500);
     
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
