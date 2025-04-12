@@ -7,7 +7,7 @@ export default function Chat() {
   const messages = useChatStore((state) => state.messages);
   
   return (
-    <div className="flex flex-col gap-4 p-4 h-full overflow-y-auto">
+    <div className="flex flex-col gap-4 p-4  overflow-y-auto">
       {messages.map((message) => (
         <div
           key={message.id}

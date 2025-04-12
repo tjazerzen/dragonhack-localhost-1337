@@ -1,4 +1,6 @@
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { Circle } from 'lucide-react';
 
 export default function NavBar() {
   return (
@@ -6,6 +8,9 @@ export default function NavBar() {
       <div className="">
         <SidebarTrigger className='hover:cursor-pointer mt-1' />
       </div>
+      <Button variant='ghost' size='icon'>
+        <Circle color='red' className='w-6 h-6'/>
+      </Button>
     </nav>
   );
 }
