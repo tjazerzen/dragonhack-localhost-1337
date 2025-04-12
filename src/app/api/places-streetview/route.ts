@@ -4,20 +4,19 @@ import { NextResponse } from 'next/server';
 const CACHE_MAX_AGE = 60 * 60;
 
 // Configuration
-const DEFAULT_ZOOM = 18;
-const DEFAULT_WIDTH = 800;
-const DEFAULT_HEIGHT = 600;
-const DEFAULT_STYLE = 'streets-v12'; // Mapbox style
+const DEFAULT_SIZE = '700x400';
+const DEFAULT_FOV = 90;
+const DEFAULT_HEADING = 0;
+const DEFAULT_PITCH = 0;
 
 export async function GET(request: Request) {
-
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get('lat');
   const lng = searchParams.get('lng');
-  const zoom = searchParams.get('zoom') || DEFAULT_ZOOM;
-  const width = searchParams.get('width') || DEFAULT_WIDTH;
-  const height = searchParams.get('height') || DEFAULT_HEIGHT;
-  const style = searchParams.get('style') || DEFAULT_STYLE;
+  const size = searchParams.get('size') || DEFAULT_SIZE;
+  const fov = searchParams.get('fov') || DEFAULT_FOV;
+  const heading = searchParams.get('heading') || DEFAULT_HEADING;
+  const pitch = searchParams.get('pitch') || DEFAULT_PITCH;
   
   if (!lat || !lng) {
     console.warn('❌ Missing coordinates');
@@ -31,23 +30,23 @@ export async function GET(request: Request) {
   }
 
   // Read API key from environment variables
-  const MAPBOX_ACCESS_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
+  const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
   // Check if the API key is set
-  if (!MAPBOX_ACCESS_TOKEN) {
-    console.error('MAPBOX_ACCESS_TOKEN environment variable is not set.');
+  if (!GOOGLE_MAPS_API_KEY) {
+    console.error('GOOGLE_MAPS_API_KEY environment variable is not set.');
     return NextResponse.json({ error: 'Server configuration error: Missing API key.' }, { status: 500 });
   }
 
   try {
-    // Construct the Mapbox Static Images API URL
-    // Format: https://api.mapbox.com/styles/v1/{username}/{style_id}/static/{longitude},{latitude},{zoom}/{width}x{height}
-    const mapboxUrl = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${lng},${lat},${zoom}/${width}x${height}?access_token=${MAPBOX_ACCESS_TOKEN}`;
+    // Construct the Google Street View API URL
+    const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=${size}&location=${lat},${lng}&fov=${fov}&heading=${heading}&pitch=${pitch}&key=${GOOGLE_MAPS_API_KEY}`;
     
-    console.log('🖼️ Generated Mapbox static image URL (token redacted):', mapboxUrl);
+    console.log('🖼️ Generated Google Street View image URL (token redacted):', 
+      streetViewUrl.replace(GOOGLE_MAPS_API_KEY, 'REDACTED'));
     
     // Return the image URL directly
-    return NextResponse.json({ photoUrl: mapboxUrl }, {
+    return NextResponse.json({ photoUrl: streetViewUrl }, {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -55,12 +54,12 @@ export async function GET(request: Request) {
       }
     });
   } catch (error) {
-    console.error('💥 Fatal error in Places API:', {
+    console.error('💥 Fatal error in StreetView API:', {
       error,
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
-    return NextResponse.json({ error: 'Failed to fetch map image' }, {
+    return NextResponse.json({ error: 'Failed to fetch Street View image' }, {
       status: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',

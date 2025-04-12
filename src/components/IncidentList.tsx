@@ -1,6 +1,6 @@
 import { useIncidentStore } from '@/store/incidentStore';
 import { IncidentStatus, IncidentType } from '@/types/incidents';
-import { FaExclamationCircle, FaExclamationTriangle, FaCheckCircle, FaSearch, FaChevronLeft } from 'react-icons/fa';
+import { FaExclamationCircle, FaExclamationTriangle, FaCheckCircle, FaSearch, FaChevronLeft, FaPlus } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
@@ -34,6 +34,7 @@ const statusLabels: Record<IncidentStatus, string> = {
 export default function IncidentList() {
   const incidents = useIncidentStore((state) => state.incidents);
   const selectIncident = useIncidentStore((state) => state.selectIncident);
+  const startAddingIncident = useIncidentStore((state) => state.startAddingIncident);
   const toggleIncidentPanel = useLayoutStore((state) => state.toggleIncidentPanel);
   const [searchText, setSearchText] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -121,8 +122,12 @@ export default function IncidentList() {
               <FaChevronLeft className="text-gray-500" />
             </button>
           </div>
-          <button className="text-blue-600 text-sm font-medium">
-            Alerts
+          <button 
+            className="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-1"
+            onClick={startAddingIncident}
+          >
+            <FaPlus size={12} />
+            Add Incident
           </button>
         </div>
         
@@ -244,7 +249,7 @@ export default function IncidentList() {
                     {incident.type.replace('_', ' ').toUpperCase()} • {incident.location}
                   </p>
                   <p className="text-gray-500 text-xs">
-                    {incident.timestamp} • {(incident.distance / 1000).toFixed(1)}km away
+                    {incident.timestamp}
                   </p>
                   <div className={`inline-block px-2 py-1 rounded-full text-xs mt-2 ${statusConfig[incident.status].color}`}>
                     {incident.status.toUpperCase()}
