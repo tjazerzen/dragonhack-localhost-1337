@@ -1,4 +1,5 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { type Message } from "@/store/chatStore";
 
 // Initialize the Gemini LLM
 // The GOOGLE_API_KEY will be automatically picked up from process.env
