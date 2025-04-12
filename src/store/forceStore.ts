@@ -6,6 +6,7 @@ interface ForceStore {
   selectedForceId: string | null;
   selectForce: (id: string | null) => void;
   updateForceStatus: (id: string, status: ForceStatus) => void;
+  updateForceCoordinates: (id: string, coordinates: [number, number]) => void;
 }
 
 // Sample force data
@@ -31,7 +32,7 @@ const sampleForces: Force[] = [
     type: 'police',
     status: 'on_road',
     location: 'Highway Patrol',
-    coordinates: [46.059091, 14.488414],
+    coordinates: [46.061583, 14.507542],
     callsign: 'Unit-3'
   },
   {
@@ -47,7 +48,7 @@ const sampleForces: Force[] = [
     type: 'firefighter',
     status: 'on_road',
     location: 'North Fire Station',
-    coordinates: [46.062091, 14.493414],
+    coordinates: [46.057671, 14.511625],
     callsign: 'Engine-2'
   },
   {
@@ -68,6 +69,13 @@ export const useForceStore = create<ForceStore>()((set, get) => ({
     const { forces } = get();
     const updatedForces = forces.map(force => 
       force.id === id ? { ...force, status } : force
+    );
+    set({ forces: updatedForces });
+  },
+  updateForceCoordinates: (id, coordinates) => {
+    const { forces } = get();
+    const updatedForces = forces.map(force => 
+      force.id === id ? { ...force, coordinates } : force
     );
     set({ forces: updatedForces });
   }
