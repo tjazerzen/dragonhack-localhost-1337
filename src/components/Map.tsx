@@ -935,7 +935,7 @@ export default function Map({ position }: MapProps) {
       <MarkerContext.Provider value={markerRefs}>
         <MapContainer 
           center={position} 
-          zoom={13} 
+          zoom={14} 
           scrollWheelZoom={true}
           style={{ height: '100%', width: '100%' }}
           className="h-full w-full z-0"
