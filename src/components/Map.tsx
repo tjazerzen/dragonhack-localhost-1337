@@ -373,12 +373,12 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
 // Add force icons for police and firefighter units
 const forceIcons: Record<ForceType, Record<ForceStatus, string>> = {
   police: {
-    idle: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzAwNjZDQyIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiPlA8L3RleHQ+PC9zdmc+',
-    on_road: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzMzOTlGRiIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiPlA8L3RleHQ+PC9zdmc+',
+    idle: '/police-car-transparent-idle.png',
+    on_road: '/police-car-transparent-not-idle.png',
   },
   firefighter: {
-    idle: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI0NDMzMwMCIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiPkY8L3RleHQ+PC9zdmc+',
-    on_road: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI0ZGNDQ0NCIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiPkY8L3RleHQ+PC9zdmc+',
+    idle: '/firefighter-transparent-idle.png',
+    on_road: '/firefighter-transparent-not-idle.png',
   }
 };
 
@@ -545,9 +545,9 @@ function MapContent({
           position={force.coordinates}
           icon={L.icon({
             iconUrl: forceIcons[force.type][force.status],
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-            popupAnchor: [0, -12],
+            iconSize: [33, 33],
+            iconAnchor: [11, 11],
+            popupAnchor: [0, -11],
           })}
           eventHandlers={{
             click: () => handleForceClick(force),
@@ -586,8 +586,10 @@ export default function Map({ position }: MapProps) {
   const [forceSearchText, setForceSearchText] = useState('');
   const [selectedForceTypes, setSelectedForceTypes] = useState<ForceType[]>([]);
   const [selectedForceStatuses, setSelectedForceStatuses] = useState<ForceStatus[]>([]);
-  const [isMovementEnabled, setIsMovementEnabled] = useState(true);
-  const [showMotionTrails, setShowMotionTrails] = useState(false);
+  
+  // Always enable movement and motion trails (removed toggles)
+  const isMovementEnabled = true;
+  const showMotionTrails = true;
   
   // Store force movement directions and history
   const [forceDirections, setForceDirections] = useState<Record<string, { lat: number, lng: number }>>({});
@@ -878,26 +880,6 @@ export default function Map({ position }: MapProps) {
             </button>
           </div>
         )}
-        
-        <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
-          <button 
-            className={`px-2 py-1 rounded text-white text-xs ${isMovementEnabled ? 'bg-blue-600' : 'bg-gray-600'}`}
-            onClick={() => setIsMovementEnabled(!isMovementEnabled)}
-            title={isMovementEnabled ? 'Disable unit movement' : 'Enable unit movement'}
-          >
-            {isMovementEnabled ? 'Movement: ON' : 'Movement: OFF'}
-          </button>
-        </div>
-
-        <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
-          <button 
-            className={`px-2 py-1 rounded text-white text-xs ${showMotionTrails ? 'bg-purple-600' : 'bg-gray-600'}`}
-            onClick={() => setShowMotionTrails(!showMotionTrails)}
-            title={showMotionTrails ? 'Hide motion trails' : 'Show motion trails'}
-          >
-            {showMotionTrails ? 'Trails: ON' : 'Trails: OFF'}
-          </button>
-        </div>
       </div>
       
       <MarkerContext.Provider value={markerRefs}>
