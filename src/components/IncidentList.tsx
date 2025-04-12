@@ -1,8 +1,9 @@
 import { useIncidentStore } from '@/store/incidentStore';
 import { IncidentStatus, IncidentType } from '@/types/incidents';
-import { FaExclamationCircle, FaExclamationTriangle, FaCheckCircle, FaSearch } from 'react-icons/fa';
+import { FaExclamationCircle, FaExclamationTriangle, FaCheckCircle, FaSearch, FaChevronLeft } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useLayoutStore } from '@/store/layoutStore';
 
 const statusConfig: Record<IncidentStatus, { color: string; icon: IconType }> = {
   critical: { color: 'bg-red-100 text-red-600', icon: FaExclamationCircle },
@@ -33,6 +34,7 @@ const statusLabels: Record<IncidentStatus, string> = {
 export default function IncidentList() {
   const incidents = useIncidentStore((state) => state.incidents);
   const selectIncident = useIncidentStore((state) => state.selectIncident);
+  const toggleIncidentPanel = useLayoutStore((state) => state.toggleIncidentPanel);
   const [searchText, setSearchText] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<IncidentType[]>([]);
@@ -109,7 +111,16 @@ export default function IncidentList() {
     <div className="h-full bg-white">
       <div className="p-4 border-b">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Emergencies</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold">Emergencies</h2>
+            <button 
+              className="p-1 hover:bg-gray-100 rounded-full"
+              onClick={toggleIncidentPanel}
+              title="Collapse panel"
+            >
+              <FaChevronLeft className="text-gray-500" />
+            </button>
+          </div>
           <button className="text-blue-600 text-sm font-medium">
             Alerts
           </button>
