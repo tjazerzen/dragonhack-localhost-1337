@@ -504,6 +504,7 @@ export default function Map({ position }: MapProps) {
   
   const forces = useForceStore((state) => state.forces);
   const selectForce = useForceStore((state) => state.selectForce);
+  const updateForceCoordinates = useForceStore((state) => state.updateForceCoordinates);
   
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
   const [streetViewUrls, setStreetViewUrls] = useState<Record<string, string | null>>({});
@@ -519,6 +520,37 @@ export default function Map({ position }: MapProps) {
   const [forceSearchText, setForceSearchText] = useState('');
   const [selectedForceTypes, setSelectedForceTypes] = useState<ForceType[]>([]);
   const [selectedForceStatuses, setSelectedForceStatuses] = useState<ForceStatus[]>([]);
+  const [isMovementEnabled, setIsMovementEnabled] = useState(true);
+
+  // Add small random movement to force units that are on_road
+  useEffect(() => {
+    // Skip movement if disabled
+    if (!isMovementEnabled) return;
+    
+    const moveForces = () => {
+      forces.forEach(force => {
+        // Only move forces that are on_road
+        if (force.status === 'on_road') {
+          // Generate a smaller random offset for smoother movement
+          const latOffset = (Math.random() - 0.5) * 0.0003;
+          const lngOffset = (Math.random() - 0.5) * 0.0005;
+          
+          // Calculate new coordinates
+          const newLat = force.coordinates[0] + latOffset;
+          const newLng = force.coordinates[1] + lngOffset;
+          
+          // Update force coordinates
+          updateForceCoordinates(force.id, [newLat, newLng]);
+        }
+      });
+    };
+    
+    // Update more frequently for smoother movement
+    const intervalId = setInterval(moveForces, 500);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [forces, updateForceCoordinates, isMovementEnabled]);
 
   useEffect(() => {
     const handleFiltersChange = (event: Event) => {
@@ -711,6 +743,16 @@ export default function Map({ position }: MapProps) {
             </button>
           </div>
         )}
+        
+        <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
+          <button 
+            className={`px-2 py-1 rounded text-white text-xs ${isMovementEnabled ? 'bg-blue-600' : 'bg-gray-600'}`}
+            onClick={() => setIsMovementEnabled(!isMovementEnabled)}
+            title={isMovementEnabled ? 'Disable unit movement' : 'Enable unit movement'}
+          >
+            {isMovementEnabled ? 'Movement: ON' : 'Movement: OFF'}
+          </button>
+        </div>
       </div>
       
       <MarkerContext.Provider value={markerRefs}>
