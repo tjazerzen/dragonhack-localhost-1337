@@ -279,17 +279,17 @@ export default function IncidentList() {
         </div>
         
         <div className="flex justify-between mt-4">
-          <div>
+          <div className="w-1/3 text-center">
             <span className="text-gray-600">Total</span>
             <div className="text-2xl font-bold">{filteredIncidents.length}</div>
           </div>
-          <div>
+          <div className="w-1/3 text-center">
             <span className="text-gray-600">Critical</span>
             <div className="text-2xl font-bold text-red-600">
               {filteredIncidents.filter(i => i.status === 'critical').length}
             </div>
           </div>
-          <div>
+          <div className="w-1/3 text-center">
             <span className="text-gray-600">Resolved</span>
             <div className="text-2xl font-bold text-green-600">
               {filteredIncidents.filter(i => i.status === 'resolved').length}

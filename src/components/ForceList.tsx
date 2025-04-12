@@ -266,17 +266,17 @@ export default function ForceList() {
         </div>
         
         <div className="flex justify-between mt-4">
-          <div>
+          <div className="w-1/3 text-center">
             <span className="text-gray-600">Total</span>
             <div className="text-2xl font-bold">{filteredForces.length}</div>
           </div>
-          <div>
+          <div className="w-1/3 text-center">
             <span className="text-gray-600">Police</span>
             <div className="text-2xl font-bold text-blue-600">
               {filteredForces.filter(f => f.type === 'police').length}
             </div>
           </div>
-          <div>
+          <div className="w-1/3 text-center">
             <span className="text-gray-600">Firefighters</span>
             <div className="text-2xl font-bold text-red-600">
               {filteredForces.filter(f => f.type === 'firefighter').length}
