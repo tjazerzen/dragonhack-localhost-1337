@@ -13,6 +13,7 @@ import { IncidentStatus, Incident, IncidentType } from '@/types/incidents';
 import { Force, ForceType, ForceStatus } from '@/types/forces';
 import { getNearestPhotoUrl, getStreetViewUrl } from '../utils/placesApi';
 import styled from 'styled-components';
+import { statusIcons } from '@/utils/mapUtils';
 
 // Create a styled version of the Leaflet Marker with CSS transition for smooth movement
 const AnimatedMarker = styled(LeafletMarker)`
@@ -28,12 +29,6 @@ const AnimatedMarker = styled(LeafletMarker)`
 interface MapProps {
   position: LatLngExpression;
 }
-
-export const statusIcons: Record<IncidentStatus, string> = {
-  critical: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI0RDMjYyNiIvPjxwYXRoIGQ9Ik04IDhMMTYgMTZNOCAxNkwxNiA4IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==',
-  moderate: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI0ZCOTIzQyIvPjxwYXRoIGQ9Ik0xMiA3VjEzTTEyIDE2VjE3IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==',
-  resolved: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzIyQzU1RSIvPjxwYXRoIGQ9Ik04IDEyTDExIDE1TDE2IDkiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+',
-};
 
 const statusBgColors: Record<IncidentStatus, string> = {
   critical: 'bg-red-600',

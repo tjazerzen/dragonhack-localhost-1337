@@ -1,9 +1,11 @@
+'use client';
+
 import { useIncidentStore } from '@/store/incidentStore';
 import { IncidentStatus, IncidentType } from '@/types/incidents';
 import { FaSearch, FaChevronLeft } from 'react-icons/fa';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
-import { statusIcons } from './Map';
+import { statusIcons } from '@/utils/mapUtils';
 
 // Make incident type labels more readable
 const typeLabels: Record<IncidentType, string> = {
