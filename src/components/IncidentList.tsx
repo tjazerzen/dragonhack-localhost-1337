@@ -35,7 +35,6 @@ export default function IncidentList() {
   const incidents = useIncidentStore((state) => state.incidents);
   const selectIncident = useIncidentStore((state) => state.selectIncident);
   const { activeSidePanel, switchSidePanel } = useLayoutStore();
-  const toggleIncidentPanel = useLayoutStore((state) => state.toggleIncidentPanel);
   const [searchText, setSearchText] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<IncidentType[]>([]);
@@ -163,18 +162,6 @@ export default function IncidentList() {
   return (
     <div className="h-full bg-white">
       <div className="p-4 border-b">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <button 
-              className="p-1 hover:bg-gray-100 rounded-full"
-              onClick={toggleIncidentPanel}
-              title="Collapse panel"
-            >
-              <FaChevronLeft className="text-gray-500" />
-            </button>
-          </div>
-        </div>
-        
         <div className="flex mt-4 mb-3">
           <button 
             className={`px-4 py-2 rounded-l-md text-sm font-medium flex items-center justify-center flex-1 ${
