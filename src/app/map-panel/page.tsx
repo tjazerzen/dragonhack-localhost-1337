@@ -23,7 +23,7 @@ export default function MapPanel() {
   addMessage('I need assistance with my account', 'caller');
 
   return (
-    <div className="flex flex-row h-[100vh] w-full">
+    <div className="flex flex-row w-full">
       <div className="w-3/12 h-full border-r">
         <IncidentList />
       </div>
