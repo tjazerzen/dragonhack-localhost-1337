@@ -1,6 +1,8 @@
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { Marker as LeafletMarker } from 'react-leaflet';
+import { Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef, createContext, useContext, useMemo } from 'react';
 import L from 'leaflet';
@@ -10,6 +12,18 @@ import { useForceStore } from '@/store/forceStore';
 import { IncidentStatus, Incident, IncidentType } from '@/types/incidents';
 import { Force, ForceType, ForceStatus } from '@/types/forces';
 import { getNearestPhotoUrl, getStreetViewUrl } from '../utils/placesApi';
+import styled from 'styled-components';
+
+// Create a styled version of the Leaflet Marker with CSS transition for smooth movement
+const AnimatedMarker = styled(LeafletMarker)`
+  transition: transform 1.8s ease;
+  
+  /* Apply animation to Leaflet's internal marker elements */
+  & .leaflet-marker-icon,
+  & .leaflet-marker-shadow {
+    transition: all 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+  }
+`;
 
 interface MapProps {
   position: LatLngExpression;
@@ -231,7 +245,7 @@ function AddIncidentMapEvents() {
   // If a temporary marker is placed, show a form to complete the incident details
   if (tempMarker && isAddingIncident) {
     return (
-      <Marker
+      <AnimatedMarker
         position={tempMarker}
         icon={L.icon({
           iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzJCOEJGRiIvPjxwYXRoIGQ9Ik0xMiA4VjE2TTggMTJIMTYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+',
@@ -246,7 +260,7 @@ function AddIncidentMapEvents() {
             setTempMarker(null);
           }} />
         </Popup>
-      </Marker>
+      </AnimatedMarker>
     );
   }
   
@@ -395,6 +409,40 @@ const ForcePopupContent: React.FC<ForcePopupContentProps> = ({ force }) => (
   </div>
 );
 
+// Component to inject global styles for Leaflet marker animations
+function LeafletAnimationStyles() {
+  useEffect(() => {
+    // Create style element
+    const styleEl = document.createElement('style');
+    styleEl.id = 'leaflet-marker-animations';
+    styleEl.innerHTML = `
+      .leaflet-marker-icon {
+        transition: transform 1.8s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                   left 1.8s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                   top 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+      }
+      .leaflet-marker-shadow {
+        transition: transform 1.8s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                   left 1.8s cubic-bezier(0.25, 0.8, 0.25, 1), 
+                   top 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+      }
+    `;
+    
+    // Add to document head
+    document.head.appendChild(styleEl);
+    
+    // Clean up on unmount
+    return () => {
+      const existingStyle = document.getElementById('leaflet-marker-animations');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, []);
+  
+  return null;
+}
+
 // MapContent component renders map elements only when the map is initialized
 function MapContent({ 
   incidents, 
@@ -405,7 +453,9 @@ function MapContent({
   streetViewUrls, 
   selectedIncident, 
   isLoading, 
-  markerRefs 
+  markerRefs,
+  forceHistory,
+  showMotionTrails 
 }: {
   incidents: Incident[];
   forces: Force[];
@@ -416,6 +466,8 @@ function MapContent({
   selectedIncident: Incident | null;
   isLoading: boolean;
   markerRefs: React.MutableRefObject<Record<string, L.Marker>>;
+  forceHistory: Record<string, Array<[number, number]>>;
+  showMotionTrails: boolean;
 }) {
   const map = useMap();
   const [isMapReady, setIsMapReady] = useState(false);
@@ -447,7 +499,7 @@ function MapContent({
       
       {/* Display incidents */}
       {incidents.map((incident) => (
-        <Marker
+        <AnimatedMarker
           key={incident.id}
           position={incident.coordinates}
           icon={L.icon({
@@ -469,12 +521,26 @@ function MapContent({
               isLoading={isLoading && selectedIncident?.id === incident.id}
             />
           </Popup>
-        </Marker>
+        </AnimatedMarker>
+      ))}
+      
+      {/* Display motion trails when enabled */}
+      {showMotionTrails && Object.entries(forceHistory).map(([forceId, positions]) => (
+        positions.length > 1 && (
+          <Polyline
+            key={`trail-${forceId}`}
+            positions={positions}
+            color={forces.find(f => f.id === forceId)?.type === 'police' ? '#3399FF' : '#FF4444'}
+            weight={2}
+            opacity={0.6}
+            dashArray="5,10"
+          />
+        )
       ))}
       
       {/* Display forces */}
       {forces.map((force) => (
-        <Marker
+        <AnimatedMarker
           key={`force-${force.id}`}
           position={force.coordinates}
           icon={L.icon({
@@ -490,7 +556,7 @@ function MapContent({
           <Popup className="rounded-lg shadow-lg border border-gray-200" minWidth={220}>
             <ForcePopupContent force={force} />
           </Popup>
-        </Marker>
+        </AnimatedMarker>
       ))}
     </>
   );
@@ -521,36 +587,105 @@ export default function Map({ position }: MapProps) {
   const [selectedForceTypes, setSelectedForceTypes] = useState<ForceType[]>([]);
   const [selectedForceStatuses, setSelectedForceStatuses] = useState<ForceStatus[]>([]);
   const [isMovementEnabled, setIsMovementEnabled] = useState(true);
+  const [showMotionTrails, setShowMotionTrails] = useState(false);
+  
+  // Store force movement directions and history
+  const [forceDirections, setForceDirections] = useState<Record<string, { lat: number, lng: number }>>({});
+  const [forceHistory, setForceHistory] = useState<Record<string, Array<[number, number]>>>({});
 
-  // Add small random movement to force units that are on_road
+  // Add more realistic movement to force units that are on_road
   useEffect(() => {
     // Skip movement if disabled
     if (!isMovementEnabled) return;
     
+    // Initialize force directions if not set
+    if (Object.keys(forceDirections).length === 0) {
+      const initialDirections: Record<string, { lat: number, lng: number }> = {};
+      const initialHistory: Record<string, Array<[number, number]>> = {};
+      
+      forces.forEach(force => {
+        if (force.status === 'on_road') {
+          // Random direction vector with normalized magnitude
+          const angle = Math.random() * Math.PI * 2;
+          initialDirections[force.id] = { 
+            lat: Math.sin(angle) * 0.0003, 
+            lng: Math.cos(angle) * 0.0003 
+          };
+          
+          // Initialize history with current position
+          initialHistory[force.id] = [force.coordinates];
+        }
+      });
+      
+      setForceDirections(initialDirections);
+      setForceHistory(initialHistory);
+    }
+    
     const moveForces = () => {
+      const updatedDirections = { ...forceDirections };
+      const updatedHistory = { ...forceHistory };
+      
       forces.forEach(force => {
         // Only move forces that are on_road
         if (force.status === 'on_road') {
-          // Generate a smaller random offset for smoother movement
-          const latOffset = (Math.random() - 0.5) * 0.0003;
-          const lngOffset = (Math.random() - 0.5) * 0.0005;
+          // Get current direction or generate a new one
+          let direction = updatedDirections[force.id];
+          
+          if (!direction) {
+            const angle = Math.random() * Math.PI * 2;
+            direction = { 
+              lat: Math.sin(angle) * 0.0003, 
+              lng: Math.cos(angle) * 0.0003 
+            };
+          }
+          
+          // Randomly adjust direction slightly (5% chance to change direction)
+          if (Math.random() < 0.05) {
+            const angle = Math.random() * Math.PI * 2;
+            const newDirection = {
+              lat: Math.sin(angle) * 0.0003,
+              lng: Math.cos(angle) * 0.0003
+            };
+            
+            // Smooth transition to new direction (blend old and new)
+            direction = {
+              lat: direction.lat * 0.7 + newDirection.lat * 0.3,
+              lng: direction.lng * 0.7 + newDirection.lng * 0.3
+            };
+          }
           
           // Calculate new coordinates
-          const newLat = force.coordinates[0] + latOffset;
-          const newLng = force.coordinates[1] + lngOffset;
+          const newLat = force.coordinates[0] + direction.lat;
+          const newLng = force.coordinates[1] + direction.lng;
           
           // Update force coordinates
           updateForceCoordinates(force.id, [newLat, newLng]);
+          
+          // Save updated direction
+          updatedDirections[force.id] = direction;
+          
+          // Update position history (keep last 5 positions)
+          if (!updatedHistory[force.id]) {
+            updatedHistory[force.id] = [];
+          }
+          
+          updatedHistory[force.id] = [
+            [newLat, newLng],
+            ...updatedHistory[force.id].slice(0, 4)
+          ];
         }
       });
+      
+      setForceDirections(updatedDirections);
+      setForceHistory(updatedHistory);
     };
     
-    // Update more frequently for smoother movement
-    const intervalId = setInterval(moveForces, 500);
+    // Update less frequently since we have CSS transitions to handle the animation
+    const intervalId = setInterval(moveForces, 2000);
     
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-  }, [forces, updateForceCoordinates, isMovementEnabled]);
+  }, [forces, updateForceCoordinates, isMovementEnabled, forceDirections, forceHistory]);
 
   useEffect(() => {
     const handleFiltersChange = (event: Event) => {
@@ -753,6 +888,16 @@ export default function Map({ position }: MapProps) {
             {isMovementEnabled ? 'Movement: ON' : 'Movement: OFF'}
           </button>
         </div>
+
+        <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
+          <button 
+            className={`px-2 py-1 rounded text-white text-xs ${showMotionTrails ? 'bg-purple-600' : 'bg-gray-600'}`}
+            onClick={() => setShowMotionTrails(!showMotionTrails)}
+            title={showMotionTrails ? 'Hide motion trails' : 'Show motion trails'}
+          >
+            {showMotionTrails ? 'Trails: ON' : 'Trails: OFF'}
+          </button>
+        </div>
       </div>
       
       <MarkerContext.Provider value={markerRefs}>
@@ -763,6 +908,7 @@ export default function Map({ position }: MapProps) {
           style={{ height: '100%', width: '100%' }}
           className="h-full w-full z-0"
         >
+          <LeafletAnimationStyles />
           <MapContent 
             incidents={filteredIncidents}
             forces={filteredForces}
@@ -773,6 +919,8 @@ export default function Map({ position }: MapProps) {
             selectedIncident={selectedIncident}
             isLoading={isLoading}
             markerRefs={markerRefs}
+            forceHistory={forceHistory}
+            showMotionTrails={showMotionTrails}
           />
         </MapContainer>
       </MarkerContext.Provider>
