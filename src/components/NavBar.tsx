@@ -3,8 +3,9 @@
 import { useLayoutStore } from '@/store/layoutStore';
 import { useIncidentStore } from '@/store/incidentStore';
 import { FaPlus } from 'react-icons/fa';
-import RecButton from './RecButton';
+import dynamic from 'next/dynamic';
 
+const RecButton = dynamic(() => import('./RecButton'), { ssr: false });
 
 export default function NavBar() {
   const { activeSidePanel, switchSidePanel } = useLayoutStore();

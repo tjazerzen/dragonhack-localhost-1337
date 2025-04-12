@@ -137,6 +137,8 @@ function MapController() {
   const map = useMap();
   const selectedIncidentId = useIncidentStore((state) => state.selectedIncidentId);
   const incidents = useIncidentStore((state) => state.incidents);
+  const selectedForceId = useForceStore((state) => state.selectedForceId);
+  const forces = useForceStore((state) => state.forces);
   const markerRefs = useContext(MarkerContext);
 
   useEffect(() => {
@@ -146,14 +148,40 @@ function MapController() {
         // Center map on the incident
         map.setView(incident.coordinates, 15);
         
-        // Open the popup for this marker
-        const marker = markerRefs.current[selectedIncidentId];
+        // Open the popup for this incident marker
+        const marker = markerRefs.current[selectedIncidentId]; // Assuming incident IDs are stored directly
         if (marker) {
           marker.openPopup();
         }
       }
-    }
+    } 
+    // Clear map focus if no incident is selected (optional, prevents staying focused after deselection)
+    // else {
+    //   // Potentially zoom out or reset view if needed when nothing is selected
+    // }
   }, [selectedIncidentId, incidents, map, markerRefs]);
+
+  // Effect to handle centering on selected force
+  useEffect(() => {
+    if (selectedForceId) {
+      const force = forces.find(f => f.id === selectedForceId);
+      if (force) {
+        // Center map on the force
+        map.setView(force.coordinates, 15);
+
+        // Open the popup for this force marker
+        const markerKey = `force-${selectedForceId}`;
+        const marker = markerRefs.current[markerKey];
+        if (marker) {
+          marker.openPopup();
+        }
+      }
+    } 
+    // Clear map focus if no force is selected (optional)
+    // else {
+    //   // Potentially adjust view when no force is selected
+    // }
+  }, [selectedForceId, forces, map, markerRefs]);
 
   return null;
 }
@@ -486,6 +514,26 @@ function MapContent({
     }
   }, [map]);
   
+  // Effect to invalidate map size on sidebar resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (map) {
+        console.log('🗺️ Sidebar resized, invalidating map size...');
+        // Use a small delay to ensure the layout is stable before invalidating
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 50); // 50ms delay
+      }
+    };
+
+    window.addEventListener('sidebarResized', handleResize);
+
+    // Cleanup listener on component unmount
+    return () => {
+      window.removeEventListener('sidebarResized', handleResize);
+    };
+  }, [map]); // Dependency on map ensures it's added only when map is available
+  
   if (!isMapReady) return null;
   
   return (
@@ -551,6 +599,8 @@ function MapContent({
           })}
           eventHandlers={{
             click: () => handleForceClick(force),
+            // Store reference to the force marker
+            add: (e) => markerRefs.current[`force-${force.id}`] = e.target,
           }}
         >
           <Popup className="rounded-lg shadow-lg border border-gray-200" minWidth={220}>
