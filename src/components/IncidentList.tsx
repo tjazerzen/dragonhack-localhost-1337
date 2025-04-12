@@ -192,7 +192,7 @@ export default function IncidentList() {
             </div>
             <input
               type="text"
-              placeholder="Search a location"
+              placeholder="Search incidents..."
               className="py-2 pl-10 pr-3 w-full border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={searchText}
               onChange={(e) => {

@@ -172,14 +172,14 @@ export default function ForceList() {
       </div>
 
       <div className="p-4 border-b">
-        <div className="mt-3 flex gap-2 items-center">
+        <div className="flex gap-2 items-center">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FaSearch className="text-gray-400" />
             </div>
             <input
               type="text"
-              placeholder="Search units"
+              placeholder="Search units..."
               className="py-2 pl-10 pr-3 w-full border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={searchText}
               onChange={(e) => {
