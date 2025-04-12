@@ -5,7 +5,7 @@ const CACHE_MAX_AGE = 60 * 60;
 
 // Configuration
 const DEFAULT_ZOOM = 18;
-const DEFAULT_WIDTH = 800;
+const DEFAULT_WIDTH = 1000;
 const DEFAULT_HEIGHT = 600;
 const DEFAULT_STYLE = 'streets-v12'; // Mapbox style
 

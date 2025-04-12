@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 const CACHE_MAX_AGE = 60 * 60;
 
 // Configuration
-const DEFAULT_SIZE = '700x400';
+const DEFAULT_SIZE = '1000x600';
 const DEFAULT_FOV = 90;
 const DEFAULT_HEADING = 0;
 const DEFAULT_PITCH = 0;

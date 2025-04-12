@@ -48,14 +48,14 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600"></div>
       </div>
     ) : (
-      <div className="mb-3 grid grid-cols-2 gap-2">
+      <div className="mb-3 space-y-2">
         {photoUrl && (
           <div>
             <div className="text-gray-500 text-xs mb-1">Map View</div>
             <img 
               src={photoUrl} 
               alt="Location map" 
-              className="w-full h-36 object-cover rounded-lg"
+              className="w-full h-40 object-cover rounded-lg"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -70,7 +70,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
             <img 
               src={streetViewUrl} 
               alt="Street view" 
-              className="w-full h-36 object-cover rounded-lg"
+              className="w-full h-40 object-cover rounded-lg"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -238,7 +238,7 @@ function AddIncidentMapEvents() {
           popupAnchor: [0, -12],
         })}
       >
-        <Popup closeButton={false} className="rounded-lg shadow-lg border border-gray-200" autoPan={true}>
+        <Popup closeButton={false} className="rounded-lg shadow-lg border border-gray-200" autoPan={true} minWidth={320} maxWidth={400}>
           <AddIncidentForm coordinates={tempMarker} onCancel={() => {
             cancelAddingIncident();
             setTempMarker(null);
@@ -406,7 +406,7 @@ function MapContent({ incidents, handleMarkerClick, photoUrls, streetViewUrls, s
             add: (e) => markerRefs.current[incident.id] = e.target,
           }}
         >
-          <Popup className="rounded-lg shadow-lg border border-gray-200">
+          <Popup className="rounded-lg shadow-lg border border-gray-200" minWidth={320} maxWidth={400}>
             <PopupContent 
               incident={incident} 
               photoUrl={photoUrls[incident.id]} 
