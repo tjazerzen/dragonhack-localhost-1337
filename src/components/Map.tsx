@@ -6,7 +6,9 @@ import { useEffect, useState, useRef, createContext, useContext, useMemo } from 
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import { useIncidentStore } from '@/store/incidentStore';
+import { useForceStore } from '@/store/forceStore';
 import { IncidentStatus, Incident, IncidentType } from '@/types/incidents';
+import { Force, ForceType, ForceStatus } from '@/types/forces';
 import { getNearestPhotoUrl, getStreetViewUrl } from '../utils/placesApi';
 
 interface MapProps {
@@ -354,10 +356,61 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
   );
 }
 
+// Add force icons for police and firefighter units
+const forceIcons: Record<ForceType, Record<ForceStatus, string>> = {
+  police: {
+    idle: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzAwNjZDQyIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiPlA8L3RleHQ+PC9zdmc+',
+    on_road: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzMzOTlGRiIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiPlA8L3RleHQ+PC9zdmc+',
+  },
+  firefighter: {
+    idle: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI0NDMzMwMCIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiPkY8L3RleHQ+PC9zdmc+',
+    on_road: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iI0ZGNDQ0NCIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiPkY8L3RleHQ+PC9zdmc+',
+  }
+};
+
+// Add simple popup content for forces
+interface ForcePopupContentProps {
+  force: Force;
+}
+
+const ForcePopupContent: React.FC<ForcePopupContentProps> = ({ force }) => (
+  <div className="w-full">
+    <div className="flex items-center justify-between border-b pb-2 mb-2">
+      <h3 className="font-medium text-lg">{force.type === 'police' ? 'Police Unit' : 'Fire Unit'}</h3>
+      <span className={`${force.status === 'idle' ? 'bg-gray-500' : 'bg-blue-500'} text-white px-2 py-1 rounded text-xs font-bold`}>
+        {force.status === 'idle' ? 'IDLE' : 'ON ROAD'}
+      </span>
+    </div>
+    
+    <div className="grid grid-cols-2 gap-2 text-sm">
+      <div>
+        <div className="text-gray-500 text-xs">Callsign</div>
+        <div>{force.callsign}</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-xs">Location</div>
+        <div>{force.location}</div>
+      </div>
+    </div>
+  </div>
+);
+
 // MapContent component renders map elements only when the map is initialized
-function MapContent({ incidents, handleMarkerClick, photoUrls, streetViewUrls, selectedIncident, isLoading, markerRefs }: {
+function MapContent({ 
+  incidents, 
+  forces,
+  handleMarkerClick,
+  handleForceClick,
+  photoUrls, 
+  streetViewUrls, 
+  selectedIncident, 
+  isLoading, 
+  markerRefs 
+}: {
   incidents: Incident[];
+  forces: Force[];
   handleMarkerClick: (incident: Incident) => void;
+  handleForceClick: (force: Force) => void;
   photoUrls: Record<string, string | null>;
   streetViewUrls: Record<string, string | null>;
   selectedIncident: Incident | null;
@@ -391,6 +444,8 @@ function MapContent({ incidents, handleMarkerClick, photoUrls, streetViewUrls, s
       />
       <MapController />
       <AddIncidentMapEvents />
+      
+      {/* Display incidents */}
       {incidents.map((incident) => (
         <Marker
           key={incident.id}
@@ -416,6 +471,27 @@ function MapContent({ incidents, handleMarkerClick, photoUrls, streetViewUrls, s
           </Popup>
         </Marker>
       ))}
+      
+      {/* Display forces */}
+      {forces.map((force) => (
+        <Marker
+          key={`force-${force.id}`}
+          position={force.coordinates}
+          icon={L.icon({
+            iconUrl: forceIcons[force.type][force.status],
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12],
+          })}
+          eventHandlers={{
+            click: () => handleForceClick(force),
+          }}
+        >
+          <Popup className="rounded-lg shadow-lg border border-gray-200" minWidth={220}>
+            <ForcePopupContent force={force} />
+          </Popup>
+        </Marker>
+      ))}
     </>
   );
 }
@@ -425,6 +501,10 @@ export default function Map({ position }: MapProps) {
   const selectIncident = useIncidentStore((state) => state.selectIncident);
   const isAddingIncident = useIncidentStore((state) => state.isAddingIncident);
   const cancelAddingIncident = useIncidentStore((state) => state.cancelAddingIncident);
+  
+  const forces = useForceStore((state) => state.forces);
+  const selectForce = useForceStore((state) => state.selectForce);
+  
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
   const [streetViewUrls, setStreetViewUrls] = useState<Record<string, string | null>>({});
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -432,14 +512,15 @@ export default function Map({ position }: MapProps) {
   const markerRefs = useRef<Record<string, L.Marker>>({});
   const mapContainerRef = useRef<HTMLDivElement>(null);
   
-  // Add state to track applied filters
   const [searchText, setSearchText] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<IncidentType[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<IncidentStatus[]>([]);
+  
+  const [forceSearchText, setForceSearchText] = useState('');
+  const [selectedForceTypes, setSelectedForceTypes] = useState<ForceType[]>([]);
+  const [selectedForceStatuses, setSelectedForceStatuses] = useState<ForceStatus[]>([]);
 
-  // Add effect to synchronize filter state with IncidentList component
   useEffect(() => {
-    // Define a function to handle filter changes
     const handleFiltersChange = (event: Event) => {
       const customEvent = event as CustomEvent<{
         searchText: string;
@@ -455,20 +536,39 @@ export default function Map({ position }: MapProps) {
       }
     };
 
-    // Add event listener for filter changes
     window.addEventListener('filtersChanged', handleFiltersChange);
 
-    // Clean up event listener on unmount
     return () => {
       window.removeEventListener('filtersChanged', handleFiltersChange);
     };
   }, []);
+  
+  useEffect(() => {
+    const handleForceFiltersChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        searchText: string;
+        selectedTypes: ForceType[];
+        selectedStatuses: ForceStatus[];
+      }>;
+      
+      if (customEvent.detail) {
+        const { searchText, selectedTypes, selectedStatuses } = customEvent.detail;
+        setForceSearchText(searchText || '');
+        setSelectedForceTypes(selectedTypes || []);
+        setSelectedForceStatuses(selectedStatuses || []);
+      }
+    };
 
-  // Filter incidents based on the same criteria as in IncidentList
+    window.addEventListener('forceFiltersChanged', handleForceFiltersChange);
+
+    return () => {
+      window.removeEventListener('forceFiltersChanged', handleForceFiltersChange);
+    };
+  }, []);
+
   const filteredIncidents = useMemo(() => {
     let filtered = incidents;
     
-    // Apply text search filter
     if (searchText.trim()) {
       const searchLower = searchText.toLowerCase().trim();
       filtered = filtered.filter(incident => 
@@ -477,49 +577,38 @@ export default function Map({ position }: MapProps) {
       );
     }
     
-    // Apply type filters
     if (selectedTypes.length > 0) {
       filtered = filtered.filter(incident => selectedTypes.includes(incident.type));
     }
     
-    // Apply status filters
     if (selectedStatuses.length > 0) {
       filtered = filtered.filter(incident => selectedStatuses.includes(incident.status));
     }
     
     return filtered;
   }, [incidents, searchText, selectedTypes, selectedStatuses]);
-
-  // Add console log to debug
-  useEffect(() => {
-    console.log('🗺️ Map component, isAddingIncident:', isAddingIncident);
-  }, [isAddingIncident]);
-
-  // Set up Leaflet icon defaults
-  useEffect(() => {
-    // @ts-expect-error - Leaflet types are not properly set up for Next.js
-    delete L.Icon.Default.prototype._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    });
+  
+  const filteredForces = useMemo(() => {
+    let filtered = forces;
     
-    // Ensure map resizes when container size changes
-    const resizeObserver = new ResizeObserver(() => {
-      window.dispatchEvent(new Event('resize'));
-    });
-    
-    if (mapContainerRef.current) {
-      resizeObserver.observe(mapContainerRef.current);
+    if (forceSearchText.trim()) {
+      const searchLower = forceSearchText.toLowerCase().trim();
+      filtered = filtered.filter(force => 
+        force.callsign.toLowerCase().includes(searchLower) || 
+        force.location.toLowerCase().includes(searchLower)
+      );
     }
     
-    return () => {
-      if (mapContainerRef.current) {
-        resizeObserver.unobserve(mapContainerRef.current);
-      }
-    };
-  }, []);
+    if (selectedForceTypes.length > 0) {
+      filtered = filtered.filter(force => selectedForceTypes.includes(force.type));
+    }
+    
+    if (selectedForceStatuses.length > 0) {
+      filtered = filtered.filter(force => selectedForceStatuses.includes(force.status));
+    }
+    
+    return filtered;
+  }, [forces, forceSearchText, selectedForceTypes, selectedForceStatuses]);
 
   const handleMarkerClick = async (incident: Incident) => {
     console.log('🎯 Marker clicked:', {
@@ -528,7 +617,6 @@ export default function Map({ position }: MapProps) {
       lng: incident.coordinates[1]
     });
 
-    // Update the selected incident in the store
     selectIncident(incident.id);
 
     try {
@@ -536,7 +624,6 @@ export default function Map({ position }: MapProps) {
       setIsLoading(true);
       console.log('🔄 Fetching photos for incident:', incident.id);
 
-      // Fetch both photos in parallel
       const [photoUrl, streetViewUrl] = await Promise.all([
         getNearestPhotoUrl(incident.coordinates[0], incident.coordinates[1]),
         getStreetViewUrl(incident.coordinates[0], incident.coordinates[1])
@@ -573,6 +660,11 @@ export default function Map({ position }: MapProps) {
     }
   };
 
+  const handleForceClick = (force: Force) => {
+    console.log('Force clicked:', force);
+    selectForce(force.id);
+  };
+
   return (
     <div ref={mapContainerRef} className="h-full w-full overflow-hidden relative">
       {isAddingIncident && (
@@ -587,23 +679,39 @@ export default function Map({ position }: MapProps) {
         </div>
       )}
       
-      {/* Add filter indicator */}
-      {(selectedTypes.length > 0 || selectedStatuses.length > 0) && (
-        <div className="absolute top-3 right-3 bg-white py-1 px-3 rounded-full border shadow-sm z-50 text-sm flex items-center">
-          <span className="font-medium text-gray-700">Filtered: </span>
-          <span className="ml-1 text-blue-600 font-medium">{filteredIncidents.length} incidents</span>
-          <button 
-            className="ml-2 text-gray-500 hover:text-gray-700"
-            onClick={() => {
-              // Emit reset event
-              window.dispatchEvent(new CustomEvent('resetFilters'));
-            }}
-            title="Clear filters"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <div className="absolute top-3 right-3 space-y-2 z-50">
+        {(selectedTypes.length > 0 || selectedStatuses.length > 0) && (
+          <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
+            <span className="font-medium text-gray-700">Filtered incidents: </span>
+            <span className="ml-1 text-red-600 font-medium">{filteredIncidents.length}</span>
+            <button 
+              className="ml-2 text-gray-500 hover:text-gray-700"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('resetFilters'));
+              }}
+              title="Clear filters"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        
+        {(selectedForceTypes.length > 0 || selectedForceStatuses.length > 0) && (
+          <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
+            <span className="font-medium text-gray-700">Filtered units: </span>
+            <span className="ml-1 text-blue-600 font-medium">{filteredForces.length}</span>
+            <button 
+              className="ml-2 text-gray-500 hover:text-gray-700"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('resetForceFilters'));
+              }}
+              title="Clear filters"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
       
       <MarkerContext.Provider value={markerRefs}>
         <MapContainer 
@@ -615,7 +723,9 @@ export default function Map({ position }: MapProps) {
         >
           <MapContent 
             incidents={filteredIncidents}
+            forces={filteredForces}
             handleMarkerClick={handleMarkerClick}
+            handleForceClick={handleForceClick}
             photoUrls={photoUrls}
             streetViewUrls={streetViewUrls}
             selectedIncident={selectedIncident}
