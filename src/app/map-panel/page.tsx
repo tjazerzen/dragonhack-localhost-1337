@@ -78,6 +78,8 @@ export default function MapPanel() {
             }}
             onResizeStop={(e, direction, ref, d) => {
               setSidebarWidth(parseInt(ref.style.width, 10));
+              // Trigger map redraw after resize
+              window.dispatchEvent(new CustomEvent('sidebarResized')); 
             }}
             className="border-r"
           >
@@ -100,7 +102,7 @@ export default function MapPanel() {
           maxWidth={800}
           enable={{ 
             top: false, 
-            right: false, 
+            right: false,
             bottom: false, 
             left: true,
             topRight: false, 
@@ -121,6 +123,8 @@ export default function MapPanel() {
           }}
           onResizeStop={(e, direction, ref, d) => {
             setChatSidebarWidth(parseInt(ref.style.width, 10));
+            // Trigger map redraw after resize
+            window.dispatchEvent(new CustomEvent('sidebarResized')); 
           }}
           className="border-l"
         >

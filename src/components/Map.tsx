@@ -514,6 +514,26 @@ function MapContent({
     }
   }, [map]);
   
+  // Effect to invalidate map size on sidebar resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (map) {
+        console.log('🗺️ Sidebar resized, invalidating map size...');
+        // Use a small delay to ensure the layout is stable before invalidating
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 50); // 50ms delay
+      }
+    };
+
+    window.addEventListener('sidebarResized', handleResize);
+
+    // Cleanup listener on component unmount
+    return () => {
+      window.removeEventListener('sidebarResized', handleResize);
+    };
+  }, [map]); // Dependency on map ensures it's added only when map is available
+  
   if (!isMapReady) return null;
   
   return (
