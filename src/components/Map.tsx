@@ -19,10 +19,10 @@ const statusIcons: Record<IncidentStatus, string> = {
   resolved: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzIyQzU1RSIvPjxwYXRoIGQ9Ik04IDEyTDExIDE1TDE2IDkiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+',
 };
 
-const statusColors: Record<IncidentStatus, string> = {
-  critical: 'text-red-600',
-  moderate: 'text-orange-500',
-  resolved: 'text-green-600',
+const statusBgColors: Record<IncidentStatus, string> = {
+  critical: 'bg-red-600',
+  moderate: 'bg-orange-500',
+  resolved: 'bg-green-600',
 };
 
 interface PopupContentProps {
@@ -32,23 +32,22 @@ interface PopupContentProps {
 }
 
 const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, isLoading }) => (
-  <div className="p-2 text-sm">
-    <h3 className="font-medium">{incident.summary}</h3>
-    <p className="text-gray-500 text-xs mt-1">
-      {incident.type.replace('_', ' ').toUpperCase()} • {incident.location}
-    </p>
-    <p className="text-gray-500 text-xs">
-      {incident.timestamp} • {(incident.distance / 1000).toFixed(1)}km away
-    </p>
-    <span className={`inline-block px-2 py-0.5 rounded-full text-xs mt-2 font-medium ${statusColors[incident.status]}`}>
-      {incident.status.toUpperCase()}
-    </span>
+  <div className="w-full max-w-sm">
+    <div className="relative">
+      <div className="flex items-center justify-between border-b pb-2 mb-2">
+        <h3 className="font-medium text-lg">{incident.summary}</h3>
+        <span className={`${statusBgColors[incident.status]} text-white px-2 py-1 rounded text-xs font-bold`}>
+          {incident.status.toUpperCase()}
+        </span>
+      </div>
+    </div>
+    
     {isLoading ? (
-      <div className="mt-3 h-48 flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className="h-48 flex items-center justify-center bg-gray-100 rounded-lg">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600"></div>
       </div>
     ) : photoUrl && (
-      <div className="mt-3">
+      <div className="mb-3">
         <img 
           src={photoUrl} 
           alt="Location photo" 
@@ -60,6 +59,38 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, isLoadi
         />
       </div>
     )}
+    
+    <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+      <div>
+        <div className="text-gray-500 text-xs">Distance</div>
+        <div>{(incident.distance / 1000).toFixed(1)} km</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-xs">Type</div>
+        <div>{incident.type.replace('_', ' ')}</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-xs">Time</div>
+        <div>{incident.timestamp}</div>
+      </div>
+      <div>
+        <div className="text-gray-500 text-xs">Location</div>
+        <div>{incident.location}</div>
+      </div>
+    </div>
+    
+    <div>
+      <div className="text-gray-500 text-xs">Summary</div>
+      <p className="text-sm">
+        {incident.summary}
+      </p>
+    </div>
+    
+    <div className="mt-2 text-right">
+      <button className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs">
+        Play
+      </button>
+    </div>
   </div>
 );
 

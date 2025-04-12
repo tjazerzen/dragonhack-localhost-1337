@@ -108,6 +108,106 @@ const sampleIncidents: Incident[] = [
     timestamp: '12:45PM',
     coordinates: [46.054091, 14.471414],
     distance: 750, // 750m from command center
+  },
+  {
+    id: '11',
+    type: 'fire',
+    summary: 'Apartment Fire on Slovenska Road',
+    status: 'critical',
+    location: 'Slovenska Road',
+    timestamp: '13:15PM',
+    coordinates: [46.052781, 14.464834],
+    distance: 550, // 550m from command center
+  },
+  {
+    id: '12',
+    type: 'medical',
+    summary: 'Elderly Person Collapsed',
+    status: 'moderate',
+    location: 'Tivoli Park',
+    timestamp: '13:30PM',
+    coordinates: [46.056761, 14.461214],
+    distance: 880, // 880m from command center
+  },
+  {
+    id: '13',
+    type: 'rescue',
+    summary: 'Child Stuck in Elevator',
+    status: 'moderate',
+    location: 'City Centre Mall',
+    timestamp: '13:45PM',
+    coordinates: [46.051391, 14.475114],
+    distance: 610, // 610m from command center
+  },
+  {
+    id: '14',
+    type: 'traffic_accident',
+    summary: 'Bus Collision with Car',
+    status: 'critical',
+    location: 'Main Bus Station',
+    timestamp: '14:00PM',
+    coordinates: [46.057891, 14.471714],
+    distance: 720, // 720m from command center
+  },
+  {
+    id: '15',
+    type: 'structural',
+    summary: 'Roof Collapse Risk after Heavy Rain',
+    status: 'critical',
+    location: 'Ljubljana Castle',
+    timestamp: '14:15PM',
+    coordinates: [46.048891, 14.478314],
+    distance: 1100, // 1.1km from command center
+  },
+  {
+    id: '16',
+    type: 'flood',
+    summary: 'Small Flood on River Bank',
+    status: 'moderate',
+    location: 'Ljubljanica River',
+    timestamp: '14:30PM',
+    coordinates: [46.053091, 14.483414],
+    distance: 1300, // 1.3km from command center
+  },
+  {
+    id: '17',
+    type: 'hazmat',
+    summary: 'Gas Leak in Restaurant',
+    status: 'critical',
+    location: 'Old Town Square',
+    timestamp: '14:45PM',
+    coordinates: [46.049291, 14.475814],
+    distance: 930, // 930m from command center
+  },
+  {
+    id: '18',
+    type: 'fire',
+    summary: 'Kitchen Fire in Restaurant',
+    status: 'resolved',
+    location: 'City Market Area',
+    timestamp: '12:15PM',
+    coordinates: [46.051591, 14.466114],
+    distance: 420, // 420m from command center
+  },
+  {
+    id: '19',
+    type: 'medical',
+    summary: 'Sports Injury at Stadium',
+    status: 'resolved',
+    location: 'Sports Stadium',
+    timestamp: '11:00AM',
+    coordinates: [46.059091, 14.473414],
+    distance: 870, // 870m from command center
+  },
+  {
+    id: '20',
+    type: 'power_outage',
+    summary: 'Localized Power Cut',
+    status: 'resolved',
+    location: 'Residential Complex',
+    timestamp: '10:15AM',
+    coordinates: [46.055091, 14.458414],
+    distance: 990, // 990m from command center
   }
 ];
 
