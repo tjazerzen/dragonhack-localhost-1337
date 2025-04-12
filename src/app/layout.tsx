@@ -32,7 +32,7 @@ export default function RootLayout({
       >
         <SidebarProvider>
           <SideBar />
-          <div className="flex min-h-screen w-full">
+          <div className="flex h-[100vh] w-full">
             <main className="flex-1">
               <NavBar />
               {children} 
