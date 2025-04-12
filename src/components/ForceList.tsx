@@ -151,7 +151,7 @@ export default function ForceList() {
       <div className="p-4 border-b">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold">Support Units</h2>
+            {/* <h2 className="text-xl font-semibold">Support Units</h2> */}
             <button 
               className="p-1 hover:bg-gray-100 rounded-full"
               onClick={toggleIncidentPanel}
