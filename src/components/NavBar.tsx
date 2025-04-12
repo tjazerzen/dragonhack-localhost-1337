@@ -4,6 +4,7 @@ import { useLayoutStore } from '@/store/layoutStore';
 import { useIncidentStore } from '@/store/incidentStore';
 import { FaPlus } from 'react-icons/fa';
 
+
 export default function NavBar() {
   const { activeSidePanel, switchSidePanel } = useLayoutStore();
   const { startAddingIncident } = useIncidentStore();
@@ -22,6 +23,7 @@ export default function NavBar() {
         <FaPlus size={12} />
         Add Incident
       </button>
+      <RecButton />
     </nav>
   );
 }
