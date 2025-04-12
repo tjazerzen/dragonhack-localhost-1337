@@ -48,7 +48,12 @@ export default function IncidentList() {
                 <StatusIcon className={`mt-1 ${statusConfig[incident.status].color}`} />
                 <div>
                   <h3 className="font-medium">{incident.summary}</h3>
-                  <span className="text-sm text-gray-500">{incident.timestamp}</span>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {incident.type.replace('_', ' ').toUpperCase()} • {incident.location}
+                  </p>
+                  <p className="text-gray-500 text-xs">
+                    {incident.timestamp} • {(incident.distance / 1000).toFixed(1)}km away
+                  </p>
                   <div className={`inline-block px-2 py-1 rounded-full text-xs mt-2 ${statusConfig[incident.status].color}`}>
                     {incident.status.toUpperCase()}
                   </div>
