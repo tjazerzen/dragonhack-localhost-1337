@@ -21,8 +21,8 @@ const sampleIncidents: Incident[] = [
     location: 'Blair Hills',
     timestamp: '10:31AM',
     coordinates: [46.055091, 14.468414],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 4
   },
   {
     id: '2',
@@ -32,8 +32,8 @@ const sampleIncidents: Incident[] = [
     location: 'Highway Junction',
     timestamp: '11:15AM',
     coordinates: [46.050091, 14.458414],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 4,
+    noFirefighterSupport: 2
   },
   {
     id: '3',
@@ -43,8 +43,8 @@ const sampleIncidents: Incident[] = [
     location: 'Industrial Park',
     timestamp: '09:30AM',
     coordinates: [46.058091, 14.448414],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 3,
+    noFirefighterSupport: 6
   },
   {
     id: '4',
@@ -54,8 +54,8 @@ const sampleIncidents: Incident[] = [
     location: 'Old Market Square',
     timestamp: '12:15PM',
     coordinates: [46.048091, 14.470414],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '5',
@@ -65,8 +65,8 @@ const sampleIncidents: Incident[] = [
     location: 'Financial District',
     timestamp: '12:45PM',
     coordinates: [46.054091, 14.471414],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 3,
+    noFirefighterSupport: 1
   },
   {
     id: '6',
@@ -76,8 +76,8 @@ const sampleIncidents: Incident[] = [
     location: 'Ljubljana Castle',
     timestamp: '14:15PM',
     coordinates: [46.048891, 14.478314],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 4
   },
   {
     id: '7',
@@ -87,8 +87,8 @@ const sampleIncidents: Incident[] = [
     location: 'Ljubljanica River',
     timestamp: '14:30PM',
     coordinates: [46.053091, 14.483414],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 1,
+    noFirefighterSupport: 3
   },
   {
     id: '8',
@@ -98,8 +98,8 @@ const sampleIncidents: Incident[] = [
     location: 'Old Town Square',
     timestamp: '14:45PM',
     coordinates: [46.049291, 14.475814],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '17',
@@ -109,8 +109,8 @@ const sampleIncidents: Incident[] = [
     location: 'Old Town Square',
     timestamp: '14:45PM',
     coordinates: [46.049291, 14.475814],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 3,
+    noFirefighterSupport: 2
   },
   {
     id: '18',
@@ -120,8 +120,8 @@ const sampleIncidents: Incident[] = [
     location: 'Stožice Stadium',
     timestamp: '15:20PM',
     coordinates: [46.081375, 14.534127],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 5,
+    noFirefighterSupport: 4
   },
   {
     id: '19',
@@ -131,8 +131,8 @@ const sampleIncidents: Incident[] = [
     location: 'Šiška District',
     timestamp: '15:30PM',
     coordinates: [46.073140, 14.486223],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '20',
@@ -142,8 +142,8 @@ const sampleIncidents: Incident[] = [
     location: 'BTC City Mall',
     timestamp: '15:45PM',
     coordinates: [46.066202, 14.539291],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 1,
+    noFirefighterSupport: 2
   },
   {
     id: '21',
@@ -153,8 +153,8 @@ const sampleIncidents: Incident[] = [
     location: 'Dunajska Road',
     timestamp: '16:00PM',
     coordinates: [46.077557, 14.511919],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 4,
+    noFirefighterSupport: 3
   },
   {
     id: '22',
@@ -164,8 +164,8 @@ const sampleIncidents: Incident[] = [
     location: 'Bežigrad District',
     timestamp: '16:15PM',
     coordinates: [46.069981, 14.546071],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 5
   },
   {
     id: '23',
@@ -175,8 +175,8 @@ const sampleIncidents: Incident[] = [
     location: 'Trnovo District',
     timestamp: '16:30PM',
     coordinates: [46.038030, 14.499781],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 3,
+    noFirefighterSupport: 4
   },
   {
     id: '24',
@@ -186,8 +186,8 @@ const sampleIncidents: Incident[] = [
     location: 'Dragon Bridge',
     timestamp: '16:45PM',
     coordinates: [46.051072, 14.455576],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 2
   },
   {
     id: '25',
@@ -197,8 +197,8 @@ const sampleIncidents: Incident[] = [
     location: 'Industrial Zone',
     timestamp: '17:00PM',
     coordinates: [46.035722, 14.476467],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '26',
@@ -208,8 +208,8 @@ const sampleIncidents: Incident[] = [
     location: 'Vič District',
     timestamp: '17:15PM',
     coordinates: [46.043884, 14.446598],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '27',
@@ -219,8 +219,8 @@ const sampleIncidents: Incident[] = [
     location: 'City Center',
     timestamp: '17:30PM',
     coordinates: [46.056378, 14.552514],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 1,
+    noFirefighterSupport: 2
   },
   {
     id: '28',
@@ -230,8 +230,8 @@ const sampleIncidents: Incident[] = [
     location: 'Tivoli Park',
     timestamp: '17:45PM',
     coordinates: [46.055295, 14.570204],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 1
   },
   {
     id: '29',
@@ -241,8 +241,8 @@ const sampleIncidents: Incident[] = [
     location: 'Rožnik Hill',
     timestamp: '18:00PM',
     coordinates: [46.078759, 14.571244],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 1,
+    noFirefighterSupport: 3
   },
   {
     id: '30',
@@ -252,8 +252,8 @@ const sampleIncidents: Incident[] = [
     location: 'Moste District',
     timestamp: '18:15PM',
     coordinates: [46.074238, 14.524785],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 1,
+    noFirefighterSupport: 2
   },
   {
     id: '31',
@@ -263,8 +263,8 @@ const sampleIncidents: Incident[] = [
     location: 'Ring Road',
     timestamp: '18:30PM',
     coordinates: [46.065604, 14.530836],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 5,
+    noFirefighterSupport: 3
   },
   {
     id: '32',
@@ -274,8 +274,8 @@ const sampleIncidents: Incident[] = [
     location: 'New Development Area',
     timestamp: '18:45PM',
     coordinates: [46.046910, 14.551539],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 3,
+    noFirefighterSupport: 5
   },
   {
     id: '33',
@@ -285,8 +285,8 @@ const sampleIncidents: Incident[] = [
     location: 'Fužine District',
     timestamp: '19:00PM',
     coordinates: [46.032182, 14.529309],
-    noPoliceSupport: 0,
-    noFirefighterSupport: 0
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   }
 ];
 
