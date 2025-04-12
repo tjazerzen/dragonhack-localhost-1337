@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 // import { model } from '@/lib/llm'; // No longer directly needed here
 import { extractLocationFromMessages, type Message } from '@/lib/locationExtractor';
-import { getCoordinates } from '@/lib/geocoding'; // Import the new function
+// import { geocodeTool } from '@/lib/geocoding'; // No longer needed here
+import { runGeocodingAgent } from '@/lib/geocodingAgent'; // Import the agent runner
+import type { GeocodingResult } from '@/lib/geocoding'; // Import the type for checking
 
-// GET handler to test location extraction and geocoding
+// GET handler to test location extraction and geocoding agent
 export async function GET() {
     try {
-        console.log("Testing Location Extraction and Geocoding (Complex Case)...");
+        console.log("Testing Location Extraction and Geocoding Agent...");
 
         // Example messages - Complex, ambiguous, multiple locations mentioned
         const exampleMessages: Message[] = [
@@ -25,19 +27,29 @@ export async function GET() {
         console.log("Extracted Location String:", location);
 
         if (!location) {
-            return NextResponse.json({ success: true, message: "No location found by LLM." });
+            return NextResponse.json({ success: true, message: "No location found by LLM.", extracted_location: null, agent_result: null });
         }
 
-        // 2. Geocode Location
-        const coordinates = await getCoordinates(location);
-        console.log("Found Coordinates:", coordinates);
+        // 2. Call Geocoding Agent
+        console.log(`Invoking geocoding agent with: "${location}"`);
+        const agentResult: GeocodingResult | null = await runGeocodingAgent(location); // Use the agent, get object or null
+        console.log("Agent Result (object or null):", agentResult);
 
-        if (!coordinates) {
-            return NextResponse.json({ success: true, location: location, message: "Could not find coordinates for the location." });
+        // 3. Return the result
+        if (agentResult) {
+            return NextResponse.json({
+                success: true,
+                extracted_location: location,
+                agent_result: agentResult // Return the object
+            });
+        } else {
+            return NextResponse.json({
+                success: false, // Indicate failure if agent returned null
+                message: "Agent failed to retrieve or parse coordinates.",
+                extracted_location: location,
+                agent_result: null
+            });
         }
-
-        // 3. Return both
-        return NextResponse.json({ success: true, location: location, coordinates: coordinates });
 
     } catch (error) {
         console.error("Test Error:", error);

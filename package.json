@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.40",
     "@langchain/core": "^0.3.44",
     "@langchain/google-genai": "^0.2.3",
     "@radix-ui/react-avatar": "^1.1.4",

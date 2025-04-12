@@ -1,4 +1,7 @@
-interface GeocodingResult {
+import { z } from "zod";
+import { DynamicTool } from "@langchain/core/tools";
+
+export interface GeocodingResult {
     lat: number;
     lng: number;
 }
@@ -13,43 +16,68 @@ interface GoogleGeocodingResponse {
     error_message?: string;
 }
 
-/**
- * Fetches coordinates for a given location string using Google Maps Geocoding API.
- * @param location The location string (address, place name, etc.).
- * @returns An object with latitude and longitude, or null if not found or an error occurs.
- */
-export async function getCoordinates(location: string): Promise<GeocodingResult | null> {
+async function fetchCoordinatesFromGoogle(location: string): Promise<GeocodingResult | string> {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
     if (!apiKey) {
         console.error("GOOGLE_MAPS_API_KEY environment variable is not set.");
-        return null;
+        return "Error: Server configuration missing API key.";
     }
 
     if (!location || location.trim() === "") {
-        console.log("Cannot geocode empty location string.");
-        return null;
+        return "Error: Cannot geocode empty location string.";
     }
 
     const encodedLocation = encodeURIComponent(location);
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedLocation}&key=${apiKey}`;
 
-    console.log(`Fetching coordinates for: "${location}"`);
+    console.log(`(Tool) Fetching coordinates for: "${location}"`);
 
     try {
         const response = await fetch(url);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Google API request failed with status ${response.status}: ${errorText}`);
+        }
         const data: GoogleGeocodingResponse = await response.json();
 
         if (data.status === "OK" && data.results.length > 0) {
             const coordinates = data.results[0].geometry.location;
-            console.log("Coordinates found:", coordinates);
-            return coordinates; // { lat: number, lng: number }
+            console.log("(Tool) Coordinates found:", coordinates);
+            return coordinates; // Return the object if successful
         } else {
-            console.warn(`Geocoding failed for "${location}". Status: ${data.status}. ${data.error_message || ''}`);
-            return null;
+            const errorMessage = `Geocoding failed. Status: ${data.status}. ${data.error_message || 'Unknown reason'}`;
+            console.warn(`(Tool) ${errorMessage}`);
+            return `Error: ${errorMessage}`; // Return error string
         }
     } catch (error) {
-        console.error(`Error fetching coordinates for "${location}":`, error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown fetch/parse error";
+        console.error(`(Tool) Error during geocoding fetch for "${location}":`, error);
+        return `Error: ${errorMessage}`; // Return error string
+    }
+}
+
+export const geocodeTool = new DynamicTool({
+    name: "google_maps_geocoder",
+    description: "Fetches latitude and longitude for a given street address or place name using the Google Maps Geocoding API. Input should be the location string itself.",
+    // func expects a string and returns a string
+    func: async (location: string): Promise<string> => {
+        const result = await fetchCoordinatesFromGoogle(location);
+        if (typeof result === 'string') {
+            // If the fetch function returned an error string
+            return result;
+        }
+        // If successful, stringify the coordinates object for the Agent
+        return JSON.stringify(result);
+    },
+});
+
+export async function getCoordinates(location: string): Promise<GeocodingResult | null> {
+    console.log(`(Standalone) Getting coordinates for: "${location}"`);
+    const result = await fetchCoordinatesFromGoogle(location);
+    if (typeof result === 'string') {
+
         return null;
     }
+    return result;
 } 
