@@ -20,7 +20,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Blair Hills',
     timestamp: '10:31AM',
-    coordinates: [46.055091, 14.468414]
+    coordinates: [46.055091, 14.468414],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 4
   },
   {
     id: '2',
@@ -29,7 +31,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Highway Junction',
     timestamp: '11:15AM',
-    coordinates: [46.050091, 14.458414]
+    coordinates: [46.050091, 14.458414],
+    noPoliceSupport: 4,
+    noFirefighterSupport: 2
   },
   {
     id: '3',
@@ -38,7 +42,9 @@ const sampleIncidents: Incident[] = [
     status: 'resolved',
     location: 'Industrial Park',
     timestamp: '09:30AM',
-    coordinates: [46.058091, 14.448414]
+    coordinates: [46.058091, 14.448414],
+    noPoliceSupport: 3,
+    noFirefighterSupport: 6
   },
   {
     id: '4',
@@ -47,7 +53,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Old Market Square',
     timestamp: '12:15PM',
-    coordinates: [46.048091, 14.470414]
+    coordinates: [46.048091, 14.470414],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '5',
@@ -56,7 +64,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Financial District',
     timestamp: '12:45PM',
-    coordinates: [46.054091, 14.471414]
+    coordinates: [46.054091, 14.471414],
+    noPoliceSupport: 3,
+    noFirefighterSupport: 1
   },
   {
     id: '6',
@@ -65,7 +75,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Ljubljana Castle',
     timestamp: '14:15PM',
-    coordinates: [46.048891, 14.478314]
+    coordinates: [46.048891, 14.478314],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 4
   },
   {
     id: '7',
@@ -74,7 +86,9 @@ const sampleIncidents: Incident[] = [
     status: 'moderate',
     location: 'Ljubljanica River',
     timestamp: '14:30PM',
-    coordinates: [46.053091, 14.483414]
+    coordinates: [46.053091, 14.483414],
+    noPoliceSupport: 1,
+    noFirefighterSupport: 3
   },
   {
     id: '8',
@@ -83,7 +97,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Old Town Square',
     timestamp: '14:45PM',
-    coordinates: [46.049291, 14.475814]
+    coordinates: [46.049291, 14.475814],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '17',
@@ -92,7 +108,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Old Town Square',
     timestamp: '14:45PM',
-    coordinates: [46.049291, 14.475814]
+    coordinates: [46.049291, 14.475814],
+    noPoliceSupport: 3,
+    noFirefighterSupport: 2
   },
   {
     id: '18',
@@ -101,7 +119,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Stožice Stadium',
     timestamp: '15:20PM',
-    coordinates: [46.081375, 14.534127]
+    coordinates: [46.081375, 14.534127],
+    noPoliceSupport: 5,
+    noFirefighterSupport: 4
   },
   {
     id: '19',
@@ -110,7 +130,9 @@ const sampleIncidents: Incident[] = [
     status: 'moderate',
     location: 'Šiška District',
     timestamp: '15:30PM',
-    coordinates: [46.073140, 14.486223]
+    coordinates: [46.073140, 14.486223],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '20',
@@ -119,7 +141,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'BTC City Mall',
     timestamp: '15:45PM',
-    coordinates: [46.066202, 14.539291]
+    coordinates: [46.066202, 14.539291],
+    noPoliceSupport: 1,
+    noFirefighterSupport: 2
   },
   {
     id: '21',
@@ -128,7 +152,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Dunajska Road',
     timestamp: '16:00PM',
-    coordinates: [46.077557, 14.511919]
+    coordinates: [46.077557, 14.511919],
+    noPoliceSupport: 4,
+    noFirefighterSupport: 3
   },
   {
     id: '22',
@@ -137,7 +163,9 @@ const sampleIncidents: Incident[] = [
     status: 'moderate',
     location: 'Bežigrad District',
     timestamp: '16:15PM',
-    coordinates: [46.069981, 14.546071]
+    coordinates: [46.069981, 14.546071],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 5
   },
   {
     id: '23',
@@ -146,7 +174,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Trnovo District',
     timestamp: '16:30PM',
-    coordinates: [46.038030, 14.499781]
+    coordinates: [46.038030, 14.499781],
+    noPoliceSupport: 3,
+    noFirefighterSupport: 4
   },
   {
     id: '24',
@@ -155,7 +185,9 @@ const sampleIncidents: Incident[] = [
     status: 'moderate',
     location: 'Dragon Bridge',
     timestamp: '16:45PM',
-    coordinates: [46.051072, 14.455576]
+    coordinates: [46.051072, 14.455576],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 2
   },
   {
     id: '25',
@@ -164,7 +196,9 @@ const sampleIncidents: Incident[] = [
     status: 'resolved',
     location: 'Industrial Zone',
     timestamp: '17:00PM',
-    coordinates: [46.035722, 14.476467]
+    coordinates: [46.035722, 14.476467],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '26',
@@ -173,7 +207,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Vič District',
     timestamp: '17:15PM',
-    coordinates: [46.043884, 14.446598]
+    coordinates: [46.043884, 14.446598],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   },
   {
     id: '27',
@@ -182,7 +218,9 @@ const sampleIncidents: Incident[] = [
     status: 'moderate',
     location: 'City Center',
     timestamp: '17:30PM',
-    coordinates: [46.056378, 14.552514]
+    coordinates: [46.056378, 14.552514],
+    noPoliceSupport: 1,
+    noFirefighterSupport: 2
   },
   {
     id: '28',
@@ -191,7 +229,9 @@ const sampleIncidents: Incident[] = [
     status: 'resolved',
     location: 'Tivoli Park',
     timestamp: '17:45PM',
-    coordinates: [46.055295, 14.570204]
+    coordinates: [46.055295, 14.570204],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 1
   },
   {
     id: '29',
@@ -200,7 +240,9 @@ const sampleIncidents: Incident[] = [
     status: 'moderate',
     location: 'Rožnik Hill',
     timestamp: '18:00PM',
-    coordinates: [46.078759, 14.571244]
+    coordinates: [46.078759, 14.571244],
+    noPoliceSupport: 1,
+    noFirefighterSupport: 3
   },
   {
     id: '30',
@@ -209,7 +251,9 @@ const sampleIncidents: Incident[] = [
     status: 'resolved',
     location: 'Moste District',
     timestamp: '18:15PM',
-    coordinates: [46.074238, 14.524785]
+    coordinates: [46.074238, 14.524785],
+    noPoliceSupport: 1,
+    noFirefighterSupport: 2
   },
   {
     id: '31',
@@ -218,7 +262,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'Ring Road',
     timestamp: '18:30PM',
-    coordinates: [46.065604, 14.530836]
+    coordinates: [46.065604, 14.530836],
+    noPoliceSupport: 5,
+    noFirefighterSupport: 3
   },
   {
     id: '32',
@@ -227,7 +273,9 @@ const sampleIncidents: Incident[] = [
     status: 'critical',
     location: 'New Development Area',
     timestamp: '18:45PM',
-    coordinates: [46.046910, 14.551539]
+    coordinates: [46.046910, 14.551539],
+    noPoliceSupport: 3,
+    noFirefighterSupport: 5
   },
   {
     id: '33',
@@ -236,7 +284,9 @@ const sampleIncidents: Incident[] = [
     status: 'moderate',
     location: 'Fužine District',
     timestamp: '19:00PM',
-    coordinates: [46.032182, 14.529309]
+    coordinates: [46.032182, 14.529309],
+    noPoliceSupport: 2,
+    noFirefighterSupport: 3
   }
 ];
 
@@ -267,7 +317,9 @@ export const useIncidentStore = create<IncidentStore>()((set, get) => ({
       status: incidentData.status,
       location: incidentData.location,
       timestamp,
-      coordinates: incidentData.coordinates
+      coordinates: incidentData.coordinates,
+      noPoliceSupport: incidentData.noPoliceSupport,
+      noFirefighterSupport: incidentData.noFirefighterSupport
     };
     
     set({

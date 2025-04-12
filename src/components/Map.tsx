@@ -111,6 +111,35 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
         <div>{incident.location}</div>
       </div>
     </div>
+
+    <div className="grid grid-cols-2 gap-2 mb-3">
+      <div>
+        <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
+        <input 
+          type="number"
+          min="0"
+          value={incident.noPoliceSupport}
+          onChange={(e) => {
+            const newValue = Math.max(0, parseInt(e.target.value) || 0);
+            incident.noPoliceSupport = newValue;
+          }}
+          className="w-full px-2 py-1 border rounded text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
+        <input 
+          type="number"
+          min="0"
+          value={incident.noFirefighterSupport}
+          onChange={(e) => {
+            const newValue = Math.max(0, parseInt(e.target.value) || 0);
+            incident.noFirefighterSupport = newValue;
+          }}
+          className="w-full px-2 py-1 border rounded text-sm"
+        />
+      </div>
+    </div>
     
     <div>
       <div className="text-gray-500 text-xs">Summary</div>
@@ -307,6 +336,8 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
   const [summary, setSummary] = useState('');
   const [status, setStatus] = useState<IncidentStatus>('critical');
   const [location, setLocation] = useState('');
+  const [noPoliceSupport, setNoPoliceSupport] = useState(0);
+  const [noFirefighterSupport, setNoFirefighterSupport] = useState(0);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -316,12 +347,14 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
       summary,
       status,
       location,
-      coordinates
+      coordinates,
+      noPoliceSupport,
+      noFirefighterSupport
     });
   };
   
   return (
-    <form onSubmit={handleSubmit} className="w-64">
+    <form onSubmit={handleSubmit} className="w-48">
       <h3 className="font-medium text-lg mb-2">Add New Incident</h3>
       
       <div className="mb-2">
@@ -377,6 +410,29 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
           className="w-full px-2 py-1 border rounded text-sm"
           required
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div>
+          <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
+          <input 
+            type="number"
+            min="0"
+            value={noPoliceSupport}
+            onChange={(e) => setNoPoliceSupport(Math.max(0, parseInt(e.target.value) || 0))}
+            className="w-full px-2 py-1 border rounded text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
+          <input 
+            type="number"
+            min="0"
+            value={noFirefighterSupport}
+            onChange={(e) => setNoFirefighterSupport(Math.max(0, parseInt(e.target.value) || 0))}
+            className="w-full px-2 py-1 border rounded text-sm"
+          />
+        </div>
       </div>
       
       <div className="flex justify-between">
