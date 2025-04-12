@@ -28,9 +28,10 @@ const statusColors: Record<IncidentStatus, string> = {
 interface PopupContentProps {
   incident: Incident;
   photoUrl: string | null;
+  isLoading: boolean;
 }
 
-const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl }) => (
+const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, isLoading }) => (
   <div className="p-2 text-sm">
     <h3 className="font-medium">{incident.summary}</h3>
     <p className="text-gray-500 text-xs mt-1">
@@ -42,7 +43,11 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl }) => (
     <span className={`inline-block px-2 py-0.5 rounded-full text-xs mt-2 font-medium ${statusColors[incident.status]}`}>
       {incident.status.toUpperCase()}
     </span>
-    {photoUrl && (
+    {isLoading ? (
+      <div className="mt-3 h-48 flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600"></div>
+      </div>
+    ) : photoUrl && (
       <div className="mt-3">
         <img 
           src={photoUrl} 
@@ -61,6 +66,8 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl }) => (
 export default function Map({ position }: MapProps) {
   const incidents = useIncidentStore((state) => state.incidents);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // @ts-expect-error - Leaflet types are not properly set up for Next.js
@@ -73,9 +80,35 @@ export default function Map({ position }: MapProps) {
   }, []);
 
   const handleMarkerClick = async (incident: Incident) => {
-    if (!photoUrls[incident.id]) {
+    console.log('🎯 Marker clicked:', {
+      id: incident.id,
+      lat: incident.coordinates[0],
+      lng: incident.coordinates[1]
+    });
+
+    try {
+      setSelectedIncident(incident);
+      setIsLoading(true);
+      console.log('🔄 Fetching photo for incident:', incident.id);
+
       const photoUrl = await getNearestPhotoUrl(incident.coordinates[0], incident.coordinates[1]);
-      setPhotoUrls(prev => ({ ...prev, [incident.id]: photoUrl }));
+      console.log('📸 Photo URL received:', photoUrl ? '✅ Success' : '❌ No URL');
+
+      if (photoUrl) {
+        setPhotoUrls(prev => ({
+          ...prev,
+          [incident.id]: photoUrl
+        }));
+        console.log('💾 Stored photo URL for incident:', incident.id);
+      }
+    } catch (error) {
+      console.error('💥 Error in handleMarkerClick:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        incidentId: incident.id
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,6 +143,7 @@ export default function Map({ position }: MapProps) {
               <PopupContent 
                 incident={incident} 
                 photoUrl={photoUrls[incident.id]} 
+                isLoading={isLoading && selectedIncident?.id === incident.id}
               />
             </Popup>
           </Marker>
