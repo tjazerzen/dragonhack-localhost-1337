@@ -32,7 +32,7 @@ const sampleForces: Force[] = [
     type: 'police',
     status: 'on_road',
     location: 'Highway Patrol',
-    coordinates: [46.059091, 14.488414],
+    coordinates: [46.061583, 14.507542],
     callsign: 'Unit-3'
   },
   {
@@ -48,7 +48,7 @@ const sampleForces: Force[] = [
     type: 'firefighter',
     status: 'on_road',
     location: 'North Fire Station',
-    coordinates: [46.062091, 14.493414],
+    coordinates: [46.057671, 14.511625],
     callsign: 'Engine-2'
   },
   {
