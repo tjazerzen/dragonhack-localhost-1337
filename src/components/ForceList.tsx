@@ -20,7 +20,7 @@ export default function ForceList() {
   const forces = useForceStore((state) => state.forces);
   const selectedForceId = useForceStore((state) => state.selectedForceId);
   const selectForce = useForceStore((state) => state.selectForce);
-  const toggleIncidentPanel = useLayoutStore((state) => state.toggleIncidentPanel);
+  const { activeSidePanel, switchSidePanel } = useLayoutStore();
   
   const [searchText, setSearchText] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -147,21 +147,31 @@ export default function ForceList() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <div className="h-full bg-white">
+    <div className="h-full bg-white flex flex-col">
+      <div className="flex">
+        <button 
+          className={`px-4 py-3 text-sm font-medium flex items-center justify-center flex-1 ${
+            activeSidePanel === 'incidents' 
+              ? 'bg-red-600 text-white' 
+              : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+          }`}
+          onClick={() => switchSidePanel('incidents')}
+        >
+          Emergencies
+        </button>
+        <button 
+          className={`px-4 py-3 text-sm font-medium flex items-center justify-center flex-1 ${
+            activeSidePanel === 'forces' 
+              ? 'bg-blue-600 text-white' 
+              : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+          }`}
+          onClick={() => switchSidePanel('forces')}
+        >
+          Support Units
+        </button>
+      </div>
+
       <div className="p-4 border-b">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            {/* <h2 className="text-xl font-semibold">Support Units</h2> */}
-            <button 
-              className="p-1 hover:bg-gray-100 rounded-full"
-              onClick={toggleIncidentPanel}
-              title="Collapse panel"
-            >
-              <FaChevronLeft className="text-gray-500" />
-            </button>
-          </div>
-        </div>
-        
         <div className="mt-3 flex gap-2 items-center">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -275,7 +285,7 @@ export default function ForceList() {
         </div>
       </div>
       
-      <div className="overflow-y-auto h-[calc(100%-180px)]">
+      <div className="overflow-y-auto flex-1">
         {filteredForces.map((force) => {
           const ForceIcon = forceTypeConfig[force.type].icon;
           return (

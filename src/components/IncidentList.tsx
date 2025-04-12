@@ -160,32 +160,32 @@ export default function IncidentList() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <div className="h-full bg-white">
+    <div className="h-full bg-white flex flex-col">
+      <div className="flex">
+        <button 
+          className={`px-4 py-3 text-sm font-medium flex items-center justify-center flex-1 ${
+            activeSidePanel === 'incidents' 
+              ? 'bg-red-600 text-white' 
+              : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+          }`}
+          onClick={() => switchSidePanel('incidents')}
+        >
+          Emergencies
+        </button>
+        <button 
+          className={`px-4 py-3 text-sm font-medium flex items-center justify-center flex-1 ${
+            activeSidePanel === 'forces' 
+              ? 'bg-blue-600 text-white' 
+              : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+          }`}
+          onClick={() => switchSidePanel('forces')}
+        >
+          Support Units
+        </button>
+      </div>
+      
       <div className="p-4 border-b">
-        <div className="flex mt-4 mb-3">
-          <button 
-            className={`px-4 py-2 rounded-l-md text-sm font-medium flex items-center justify-center flex-1 ${
-              activeSidePanel === 'incidents' 
-                ? 'bg-red-600 text-white' 
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-            }`}
-            onClick={() => switchSidePanel('incidents')}
-          >
-            Emergencies
-          </button>
-          <button 
-            className={`px-4 py-2 rounded-r-md text-sm font-medium flex items-center justify-center flex-1 ${
-              activeSidePanel === 'forces' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-            }`}
-            onClick={() => switchSidePanel('forces')}
-          >
-            Support Units
-          </button>
-        </div>
-        
-        <div className="mt-3 flex gap-2 items-center">
+        <div className="flex gap-2 items-center">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FaSearch className="text-gray-400" />
@@ -298,7 +298,7 @@ export default function IncidentList() {
         </div>
       </div>
       
-      <div className="overflow-y-auto h-[calc(100%-180px)]">
+      <div className="overflow-y-auto flex-1">
         {filteredIncidents.map((incident) => {
           const StatusIcon = statusConfig[incident.status].icon;
           return (
