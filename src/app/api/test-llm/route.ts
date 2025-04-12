@@ -4,13 +4,15 @@ import { extractLocationFromMessages, type Message } from '@/lib/locationExtract
 // import { geocodeTool } from '@/lib/geocoding'; // No longer needed here
 import { runGeocodingAgent } from '@/lib/geocodingAgent'; // Import the agent runner
 import type { GeocodingResult } from '@/lib/geocoding'; // Import the type for checking
+// Import the accident report agent
+import { generateAccidentReport, type AccidentReport } from '@/lib/accidentReportAgent';
 
-// GET handler to test location extraction and geocoding agent
+// GET handler to test location extraction, geocoding agent, and accident report agent
 export async function GET() {
     try {
-        console.log("Testing Location Extraction and Geocoding Agent...");
+        console.log("Testing Location Extraction, Geocoding Agent, and Accident Report Agent...");
 
-        // Example messages - Complex, ambiguous, multiple locations mentioned
+        // Original example messages
         const exampleMessages: Message[] = [
             { sender: 'caller', content: 'Help! There\'s a guy causing trouble outside.' },
             { sender: 'admin', content: 'Okay, where are you located?' },
@@ -22,37 +24,58 @@ export async function GET() {
             { sender: 'admin', content: 'Understood, near the Dragon Bridge on Trubarjeva cesta. Sending officers now.' },
         ];
 
+        // Format messages into a single transcript string
+        const transcript = exampleMessages
+            .map(msg => `${msg.sender}: ${msg.content}`)
+            .join("\n");
+
+        // --- Run the agents --- 
+        let location: string | undefined = undefined;
+        let geocodingResult: GeocodingResult | null = null;
+        let accidentReport: AccidentReport | null = null;
+
         // 1. Extract Location
-        const location = await extractLocationFromMessages(exampleMessages);
-        console.log("Extracted Location String:", location);
-
-        if (!location) {
-            return NextResponse.json({ success: true, message: "No location found by LLM.", extracted_location: null, agent_result: null });
+        try {
+            location = await extractLocationFromMessages(exampleMessages);
+            console.log("Extracted Location String:", location);
+        } catch (error) {
+            console.error("Error during location extraction:", error);
+            // Allow request to continue
         }
 
-        // 2. Call Geocoding Agent
-        console.log(`Invoking geocoding agent with: "${location}"`);
-        const agentResult: GeocodingResult | null = await runGeocodingAgent(location); // Use the agent, get object or null
-        console.log("Agent Result (object or null):", agentResult);
-
-        // 3. Return the result
-        if (agentResult) {
-            return NextResponse.json({
-                success: true,
-                extracted_location: location,
-                agent_result: agentResult // Return the object
-            });
-        } else {
-            return NextResponse.json({
-                success: false, // Indicate failure if agent returned null
-                message: "Agent failed to retrieve or parse coordinates.",
-                extracted_location: location,
-                agent_result: null
-            });
+        // 2. Call Geocoding Agent (only if location was extracted)
+        if (location) {
+            try {
+                console.log(`Invoking geocoding agent with: "${location}"`);
+                geocodingResult = await runGeocodingAgent(location);
+                console.log("Geocoding Agent Result (object or null):", geocodingResult);
+            } catch (error) {
+                console.error("Error during geocoding agent execution:", error);
+                // Allow request to continue
+            }
         }
+
+        // 3. Generate Accident Report
+        try {
+            console.log("Invoking accident report agent...");
+            accidentReport = await generateAccidentReport(transcript);
+            console.log("Accident Report Result:", accidentReport);
+        } catch (error) {
+            console.error("Error generating accident report:", error);
+            // Allow request to continue
+        }
+
+        // 4. Return the combined results
+        return NextResponse.json({
+            success: true, // Indicate the API route itself succeeded
+            extracted_location: location || null,
+            geocoding_result: geocodingResult, // Will be null if extraction failed or geocoding failed
+            accident_report: accidentReport, // Will be null if generation failed
+        });
 
     } catch (error) {
-        console.error("Test Error:", error);
+        // Catch unexpected errors in the overall handler
+        console.error("Test API Top-Level Error:", error);
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }

@@ -17,11 +17,11 @@ interface GoogleGeocodingResponse {
 }
 
 async function fetchCoordinatesFromGoogle(location: string): Promise<GeocodingResult | string> {
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    const apiKey = process.env.GEODECODING_API_KEY;
 
     if (!apiKey) {
-        console.error("GOOGLE_MAPS_API_KEY environment variable is not set.");
-        return "Error: Server configuration missing API key.";
+        console.error("GEODECODING_API_KEY environment variable is not set.");
+        return "Error: Server configuration missing Geocoding API key.";
     }
 
     if (!location || location.trim() === "") {
