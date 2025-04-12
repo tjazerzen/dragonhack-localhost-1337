@@ -10,5 +10,4 @@ export interface Incident {
   location: string;
   timestamp: string;
   coordinates: [number, number]; // [latitude, longitude]
-  distance: number; // in meters from command center
 } 
