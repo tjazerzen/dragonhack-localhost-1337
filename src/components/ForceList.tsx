@@ -1,19 +1,30 @@
 import { useForceStore } from '@/store/forceStore';
 import { ForceType, ForceStatus } from '@/types/forces';
 import { FaChevronLeft } from 'react-icons/fa6';
-import { FaSearch, FaShieldAlt, FaFire, FaCircle } from 'react-icons/fa';
-import { IconType } from 'react-icons';
+import { FaSearch, FaCircle } from 'react-icons/fa';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 
-const forceTypeConfig: Record<ForceType, { color: string; icon: IconType; label: string }> = {
-  police: { color: 'bg-blue-100 text-blue-600', icon: FaShieldAlt, label: 'Police' },
-  firefighter: { color: 'bg-red-100 text-red-600', icon: FaFire, label: 'Firefighter' },
+const forceTypeConfig: Record<ForceType, { label: string }> = {
+  police: { label: 'Police' },
+  firefighter: { label: 'Firefighter' },
 };
 
 const forceStatusConfig: Record<ForceStatus, { color: string; label: string }> = {
   idle: { color: 'bg-gray-100 text-gray-600', label: 'Idle' },
   on_road: { color: 'bg-blue-100 text-blue-600', label: 'On Road' },
+};
+
+// Add force icons for police and firefighter units based on status
+const forceIconPaths: Record<ForceType, Record<ForceStatus, string>> = {
+  police: {
+    idle: '/police-car-transparent-idle.png',
+    on_road: '/police-car-transparent-not-idle.png',
+  },
+  firefighter: {
+    idle: '/firefighter-transparent-idle.png',
+    on_road: '/firefighter-transparent-not-idle.png',
+  }
 };
 
 export default function ForceList() {
@@ -287,7 +298,7 @@ export default function ForceList() {
       
       <div className="overflow-y-auto flex-1">
         {filteredForces.map((force) => {
-          const ForceIcon = forceTypeConfig[force.type].icon;
+          const iconPath = forceIconPaths[force.type][force.status];
           return (
             <div
               key={force.id}
@@ -295,7 +306,11 @@ export default function ForceList() {
               onClick={() => selectForce(force.id)}
             >
               <div className="flex items-start gap-3">
-                <ForceIcon className={`mt-1 ${forceTypeConfig[force.type].color}`} />
+                <img 
+                  src={iconPath} 
+                  alt={`${forceTypeConfig[force.type].label} icon`} 
+                  className="mt-1 w-5 h-5 object-contain"
+                />
                 <div>
                   <h3 className="font-medium">{force.callsign}</h3>
                   <p className="text-gray-500 text-xs mt-1">
