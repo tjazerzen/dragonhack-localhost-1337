@@ -11,7 +11,6 @@ interface MapProps {
 }
 
 export default function Map({ position }: MapProps) {
-  // Fix for Leaflet marker icons in Next.js
   useEffect(() => {
     // @ts-expect-error - Leaflet types are not properly set up for Next.js
     delete L.Icon.Default.prototype._getIconUrl;
@@ -23,21 +22,31 @@ export default function Map({ position }: MapProps) {
   }, []);
 
   return (
-    <div className="h-full w-full [&_.leaflet-container]:h-full">
+    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden relative">
       <MapContainer 
         center={position} 
         zoom={13} 
         scrollWheelZoom={true}
         style={{ height: '100%', width: '100%' }}
-        className="h-full w-full"
+        className="h-full w-full z-0"
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-        <Marker position={position}>
-          <Popup>
-            A pretty CSS3 popup. <br /> Easily customizable.
+        <Marker 
+          position={position}
+          icon={L.icon({
+            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM4LjEzIDIgNSAxMi4xMyA1IDE2QzUgMTkuODcgOC4xMyAyMyAxMiAyM0MxNS44NyAyMyAxOSAxOS44NyAxOSAxNkMxOSAxMi4xMyAxNS44NyAyIDEyIDJaTTcgMTZDNyAxMi4xMyAxMCA5IDE0IDlDMTcuODcgOSAyMSAxMi4xMyAyMSAxNkMyMSAxOS44NyAxNy44NyAyMyAxNCAyM0MxMC4xMyAyMyA3IDE5Ljg3IDcgMTZaIiBmaWxsPSIjMDA3QUZGIi8+PC9zdmc+',
+            iconSize: [24, 24],
+            iconAnchor: [12, 24],
+            popupAnchor: [0, -24],
+          })}
+        >
+          <Popup className="rounded-lg shadow-lg border border-gray-200">
+            <div className="p-2 text-sm">
+              <p className="font-medium">Current Location</p>
+            </div>
           </Popup>
         </Marker>
       </MapContainer>

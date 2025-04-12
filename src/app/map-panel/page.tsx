@@ -22,12 +22,9 @@ export default function MapPanel() {
   addMessage('I need assistance with my account', 'caller');
 
   return (
-    <div className="flex flex-row h-screen w-full">
-      <div className="w-3/12 h-full bg-gray-100">
-        {/* Left blank section */}
-      </div>
-      <div className="w-6/12 h-full relative">
-        <div className="absolute inset-0">
+    <div className="flex flex-row h-[100vh] w-full">
+      <div className="w-9/12 h-full relative">
+        <div className="h-full w-full z-10">
           <Map position={position} />
         </div>
       </div>
