@@ -7,7 +7,7 @@ import IncidentList from '@/components/IncidentList';
 import ForceList from '@/components/ForceList';
 import CollapsedPanel from '@/components/CollapsedPanel';
 import { useLayoutStore } from '@/store/layoutStore';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Resizable } from 're-resizable';
 
 const Map = dynamic(() => import('@/components/Map'), {
@@ -21,14 +21,6 @@ export default function MapPanel() {
   const position: LatLngExpression = [46.052091, 14.468414];
   const [sidebarWidth, setSidebarWidth] = useState(400);
   const [chatSidebarWidth, setChatSidebarWidth] = useState(400);
-
-  // Move the message calls into a useEffect hook that runs once on mount
-  useEffect(() => {
-    // Add an admin message
-    addMessage('Hello, how can I help you?', 'admin');
-    // Add a caller message
-    addMessage('I need assistance with my account', 'caller');
-  }, [addMessage]); // Include addMessage in the dependency array
 
   // Render the appropriate panel based on the active side panel type
   const renderSidePanel = () => {
