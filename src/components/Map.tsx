@@ -373,12 +373,12 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
 // Add force icons for police and firefighter units
 const forceIcons: Record<ForceType, Record<ForceStatus, string>> = {
   police: {
-    idle: '/police-car-idle.png',
-    on_road: '/police-car-not-idle.png',
+    idle: '/police-car-transparent-idle.png',
+    on_road: '/police-car-transparent-not-idle.png',
   },
   firefighter: {
-    idle: '/firefighter-idle.png',
-    on_road: '/firefighter-not-idle.png',
+    idle: '/firefighter-transparent-idle.png',
+    on_road: '/firefighter-transparent-not-idle.png',
   }
 };
 
