@@ -125,6 +125,69 @@ function MapController() {
   return null;
 }
 
+// MapContent component renders map elements only when the map is initialized
+function MapContent({ incidents, handleMarkerClick, photoUrls, selectedIncident, isLoading, markerRefs }: {
+  incidents: Incident[];
+  handleMarkerClick: (incident: Incident) => void;
+  photoUrls: Record<string, string | null>;
+  selectedIncident: Incident | null;
+  isLoading: boolean;
+  markerRefs: React.MutableRefObject<Record<string, L.Marker>>;
+}) {
+  const map = useMap();
+  const [isMapReady, setIsMapReady] = useState(false);
+  
+  // Set map as ready after it's properly initialized
+  useEffect(() => {
+    if (map) {
+      setIsMapReady(true);
+      // Force map to update its size after initialization
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+      
+      // Trigger additional resize
+      window.dispatchEvent(new Event('resize'));
+    }
+  }, [map]);
+  
+  if (!isMapReady) return null;
+  
+  return (
+    <>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+      />
+      <MapController />
+      {incidents.map((incident) => (
+        <Marker
+          key={incident.id}
+          position={incident.coordinates}
+          icon={L.icon({
+            iconUrl: statusIcons[incident.status],
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12],
+          })}
+          eventHandlers={{
+            click: () => handleMarkerClick(incident),
+            add: (e) => markerRefs.current[incident.id] = e.target,
+          }}
+        >
+          <Popup className="rounded-lg shadow-lg border border-gray-200">
+            <PopupContent 
+              incident={incident} 
+              photoUrl={photoUrls[incident.id]} 
+              isLoading={isLoading && selectedIncident?.id === incident.id}
+            />
+          </Popup>
+        </Marker>
+      ))}
+    </>
+  );
+}
+
 export default function Map({ position }: MapProps) {
   const incidents = useIncidentStore((state) => state.incidents);
   const selectIncident = useIncidentStore((state) => state.selectIncident);
@@ -132,7 +195,9 @@ export default function Map({ position }: MapProps) {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const markerRefs = useRef<Record<string, L.Marker>>({});
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
+  // Set up Leaflet icon defaults
   useEffect(() => {
     // @ts-expect-error - Leaflet types are not properly set up for Next.js
     delete L.Icon.Default.prototype._getIconUrl;
@@ -141,6 +206,21 @@ export default function Map({ position }: MapProps) {
       iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
       shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
     });
+    
+    // Ensure map resizes when container size changes
+    const resizeObserver = new ResizeObserver(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+    
+    if (mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+    
+    return () => {
+      if (mapContainerRef.current) {
+        resizeObserver.unobserve(mapContainerRef.current);
+      }
+    };
   }, []);
 
   const handleMarkerClick = async (incident: Incident) => {
@@ -180,7 +260,7 @@ export default function Map({ position }: MapProps) {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full overflow-hidden relative">
+    <div ref={mapContainerRef} className="h-full w-full overflow-hidden relative">
       <MarkerContext.Provider value={markerRefs}>
         <MapContainer 
           center={position} 
@@ -189,35 +269,14 @@ export default function Map({ position }: MapProps) {
           style={{ height: '100%', width: '100%' }}
           className="h-full w-full z-0"
         >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          <MapContent 
+            incidents={incidents}
+            handleMarkerClick={handleMarkerClick}
+            photoUrls={photoUrls}
+            selectedIncident={selectedIncident}
+            isLoading={isLoading}
+            markerRefs={markerRefs}
           />
-          <MapController />
-          {incidents.map((incident) => (
-            <Marker
-              key={incident.id}
-              position={incident.coordinates}
-              icon={L.icon({
-                iconUrl: statusIcons[incident.status],
-                iconSize: [24, 24],
-                iconAnchor: [12, 12],
-                popupAnchor: [0, -12],
-              })}
-              eventHandlers={{
-                click: () => handleMarkerClick(incident),
-                add: (e) => markerRefs.current[incident.id] = e.target,
-              }}
-            >
-              <Popup className="rounded-lg shadow-lg border border-gray-200">
-                <PopupContent 
-                  incident={incident} 
-                  photoUrl={photoUrls[incident.id]} 
-                  isLoading={isLoading && selectedIncident?.id === incident.id}
-                />
-              </Popup>
-            </Marker>
-          ))}
         </MapContainer>
       </MarkerContext.Provider>
     </div>

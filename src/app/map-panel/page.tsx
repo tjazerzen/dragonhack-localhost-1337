@@ -34,7 +34,7 @@ export default function MapPanel() {
           <IncidentList />
         </div>
       )}
-      <div className={`${isIncidentPanelCollapsed ? 'w-[calc(75%-40px)]' : 'w-6/12'} h-full relative transition-all duration-300`}>
+      <div className="h-full relative flex-grow transition-all duration-300">
         <div className="h-full w-full z-10">
           <Map position={position} />
         </div>
