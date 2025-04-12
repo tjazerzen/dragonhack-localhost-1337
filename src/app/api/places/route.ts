@@ -2,10 +2,54 @@ import { NextResponse } from 'next/server';
 
 interface PlaceResult {
   photos?: Array<{ photo_reference: string }>;
+  rating?: number;
+  user_ratings_total?: number;
+  types?: Array<string>;
 }
 
 // Cache successful responses for 1 hour
 const CACHE_MAX_AGE = 60 * 60;
+
+// Configuration
+const DEFAULT_RADIUS = 500; // meters
+const DEFAULT_PHOTO_WIDTH = 800;
+
+// Place types we're interested in - focusing specifically on buildings and structures
+// https://developers.google.com/maps/documentation/places/web-service/supported_types
+const PLACE_TYPES = [
+  // Educational institutions
+  'university',
+  'school',
+  'secondary_school',
+  'primary_school',
+  'library',
+  
+  // Cultural and historical buildings
+  'museum',
+  'art_gallery',
+  'tourist_attraction',
+  
+  // Government and public buildings
+  'city_hall',
+  'courthouse',
+  'embassy',
+  'local_government_office',
+  
+  // Religious buildings
+  'church',
+  'mosque',
+  'synagogue',
+  'hindu_temple',
+  
+  // Large structures
+  'stadium',
+  'shopping_mall',
+  
+  // Generic building categories
+  'point_of_interest',
+  'establishment',
+  'landmark'
+].join('|');
 
 export async function GET(request: Request) {
   console.log('📥 Received Places API request');
@@ -13,9 +57,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const lat = searchParams.get('lat');
   const lng = searchParams.get('lng');
-
-  console.log('📍 Coordinates:', { lat, lng });
-
+  const radius = searchParams.get('radius') || DEFAULT_RADIUS;
+  const photoWidth = searchParams.get('width') || DEFAULT_PHOTO_WIDTH;
+  
+  console.log('📍 Coordinates:', { lat, lng, radius, photoWidth });
+  
   if (!lat || !lng) {
     console.warn('❌ Missing coordinates');
     return NextResponse.json({ error: 'Missing latitude or longitude' }, {
@@ -37,8 +83,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 1. First, search for places near the coordinates
-    const nearbySearchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=100&key=${GOOGLE_MAPS_API_KEY}`;
+    // 1. First, search for places near the coordinates with enhanced parameters
+    const nearbySearchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=${PLACE_TYPES}&key=${GOOGLE_MAPS_API_KEY}`;
     console.log('🔍 Searching nearby places:', nearbySearchUrl.replace(GOOGLE_MAPS_API_KEY, 'REDACTED'));
 
     const searchResponse = await fetch(nearbySearchUrl, {
@@ -86,13 +132,25 @@ export async function GET(request: Request) {
         }
       });
     }
+    
+    // Get the best rated place that has photos
+    const place = searchData.results
+      .filter((place: PlaceResult) => place.photos && place.photos.length > 0)
+      .sort((a: PlaceResult, b: PlaceResult) => {
+        // Prioritize places with higher ratings and more reviews
+        // We're giving slightly more weight to places with photos since they're likely more notable
+        const photoWeight = (p: PlaceResult) => Math.min(p.photos?.length || 0, 5) * 0.1;
+        const scoreA = (a.rating || 0) * Math.log(a.user_ratings_total || 1) + photoWeight(a);
+        const scoreB = (b.rating || 0) * Math.log(b.user_ratings_total || 1) + photoWeight(b);
+        return scoreB - scoreA;
+      })[0];
 
-    // Get the first place that has photos
-    const place = searchData.results.find((place: PlaceResult) => place.photos && place.photos.length > 0);
-    console.log('📸 Found place with photos:', {
+    console.log('📸 Found best rated place with photos:', {
       hasPlace: !!place,
-      hasPhotos: place?.photos?.length > 0,
-      photoCount: place?.photos?.length
+      rating: place?.rating,
+      totalRatings: place?.user_ratings_total,
+      photoCount: place?.photos?.length,
+      types: place?.types
     });
 
     if (!place || !place.photos) {
@@ -108,9 +166,9 @@ export async function GET(request: Request) {
 
     // Get the photo reference from the first photo
     const photoReference = place.photos[0].photo_reference;
-
-    // 2. Construct the URL for the actual photo
-    const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoReference}&key=${GOOGLE_MAPS_API_KEY}`;
+    
+    // 2. Construct the URL for the actual photo with configurable width
+    const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${photoWidth}&photo_reference=${photoReference}&key=${GOOGLE_MAPS_API_KEY}`;
     console.log('🖼️ Generated photo URL:', photoUrl.replace(GOOGLE_MAPS_API_KEY, 'REDACTED'));
 
     return NextResponse.json({ photoUrl }, {
