@@ -3,6 +3,7 @@
 import { useLayoutStore } from '@/store/layoutStore';
 import { useIncidentStore } from '@/store/incidentStore';
 import { FaPlus } from 'react-icons/fa';
+import RecButton from './RecButton';
 
 
 export default function NavBar() {
