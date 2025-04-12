@@ -56,6 +56,56 @@ const sampleIncidents: Incident[] = [
     timestamp: '09:30AM',
     coordinates: [51.508, -0.11],
     distance: 1800, // 1.8km from command center
+  },
+  {
+    id: '6',
+    type: 'medical',
+    summary: 'Mass Casualty Incident at Concert Venue',
+    status: 'critical',
+    location: 'Royal Festival Hall',
+    timestamp: '11:45AM',
+    coordinates: [51.503, -0.085],
+    distance: 600, // 600m from command center
+  },
+  {
+    id: '7',
+    type: 'hazmat',
+    summary: 'Chemical Spill on Railway',
+    status: 'moderate',
+    location: 'Central Station',
+    timestamp: '12:00PM',
+    coordinates: [51.509, -0.095],
+    distance: 950, // 950m from command center
+  },
+  {
+    id: '8',
+    type: 'structural',
+    summary: 'Building Collapse Risk',
+    status: 'critical',
+    location: 'Old Market Square',
+    timestamp: '12:15PM',
+    coordinates: [51.502, -0.088],
+    distance: 1500, // 1.5km from command center
+  },
+  {
+    id: '9',
+    type: 'rescue',
+    summary: 'Trapped Workers in Construction Site',
+    status: 'moderate',
+    location: 'New Development Zone',
+    timestamp: '12:30PM',
+    coordinates: [51.506, -0.092],
+    distance: 400, // 400m from command center
+  },
+  {
+    id: '10',
+    type: 'power_outage',
+    summary: 'Widespread Power Failure',
+    status: 'critical',
+    location: 'Financial District',
+    timestamp: '12:45PM',
+    coordinates: [51.504, -0.087],
+    distance: 750, // 750m from command center
   }
 ];
 

@@ -1,6 +1,6 @@
 export type IncidentStatus = 'resolved' | 'critical' | 'moderate';
 
-export type IncidentType = 'fire' | 'flood' | 'earthquake' | 'traffic_accident';
+export type IncidentType = 'fire' | 'flood' | 'earthquake' | 'traffic_accident' | 'medical' | 'hazmat' | 'structural' | 'rescue' | 'power_outage';
 
 export interface Incident {
   id: string;
