@@ -11,8 +11,9 @@ export default function RecButton() {
   const [isRecording, setIsRecording] = useState(false);
   const { text, startTranscription, stopTranscription } = useTranscribe();
   const addMessage = useChatStore((state) => state.addMessage);
-  const updateMessage = useChatStore((state) => state.updateMessage);
-  const [currentSpeaker, setCurrentSpeaker] = useState<'admin' | 'caller'>('caller');
+  const appendToMessage = useChatStore((state) => state.appendToMessage);
+  const [currentSpeaker, setCurrentSpeaker] = useState<'admin' | 'caller' | undefined>(undefined);
+  const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isRecording) {
@@ -24,21 +25,25 @@ export default function RecButton() {
 
   useEffect(() => {
     if (text) {
-      if (text.startsWith('spk:')) {
-        const match = text.match(/^spk:(\d+)(.*)/);
-        console.log(match);
-        if (match) {
-          const [, speakerNumber, content] = match;
-          setCurrentSpeaker(speakerNumber === '1' ? 'admin' : 'caller');
-
-          updateMessage(content.trim(), currentSpeaker, true);
-          addMessage(content.trim(), currentSpeaker, true);
+      console.log(text);
+      const match = text.match(/spk:(\d+)(.*)/);
+      console.log(match);
+      if (match) {
+        const [, speakerNumber, content] = match;
+        const newSpeaker = speakerNumber === '1' ? 'admin' : 'caller';
+        console.log(newSpeaker);
+        if (newSpeaker !== currentSpeaker) {
+          setCurrentSpeaker(newSpeaker);
+          const newMessageId = addMessage(content, newSpeaker);
+          setCurrentMessageId(newMessageId);
+        } else if (currentMessageId) {
+          appendToMessage(currentMessageId, content);
         }
-      } else {
-        addMessage(text.trim(), currentSpeaker, true);
+      } else if (currentMessageId) {
+        appendToMessage(currentMessageId, text);
       }
-    } 
-  }, [text, addMessage, currentSpeaker, updateMessage]);
+    }
+  }, [text, addMessage, currentSpeaker, currentMessageId, appendToMessage]);
 
   return (
     <Button 

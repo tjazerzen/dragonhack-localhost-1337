@@ -49,23 +49,7 @@ export default function useTranscribe() {
         setState(newState);
       },
       onPartialResult(result: TranscriptionResult) {
-        // Add speaker tag to the text in the format spk:NUMBER
-        const speakerNumber = result.speaker || 2; // Default to 2 (caller) if no speaker
-        setText((text) => {
-          // If we have existing text, check if it has a speaker tag
-          if (text && text.startsWith('spk:')) {
-            // Extract current speaker number
-            const currentMatch = text.match(/^spk:(\d+)/);
-            if (currentMatch && currentMatch[1] === speakerNumber.toString()) {
-              // Same speaker, append text
-              return text + result.text;
-            }
-            // Different speaker, start new text
-            return `spk:${speakerNumber}:${result.text}`;
-          }
-          // No existing text, start with speaker tag
-          return `spk:${speakerNumber}:${result.text}`;
-        });
+        setText(result.text);
       },
     });
   }, []);

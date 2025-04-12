@@ -34,9 +34,6 @@ export default function Chat() {
           >
             <p className="text-sm">
               {message.content}
-              {!message.isComplete && (
-                <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
-              )}
             </p>
             <p className="text-xs mt-1 opacity-70">
               {message.timestamp.toLocaleTimeString()}

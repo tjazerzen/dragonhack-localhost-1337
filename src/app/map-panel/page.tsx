@@ -6,7 +6,6 @@ import type { LatLngExpression } from 'leaflet';
 import IncidentList from '@/components/IncidentList';
 import CollapsedPanel from '@/components/CollapsedPanel';
 import { useLayoutStore } from '@/store/layoutStore';
-import { useEffect } from 'react';
 
 const Map = dynamic(() => import('@/components/Map'), {
   ssr: false,
