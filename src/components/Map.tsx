@@ -112,14 +112,32 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
       </div>
     </div>
 
-    <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+    <div className="grid grid-cols-2 gap-2 mb-3">
       <div>
-        <div className="text-gray-500 text-xs">Police Support</div>
-        <div>{incident.noPoliceSupport}</div>
+        <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
+        <input 
+          type="number"
+          min="0"
+          value={incident.noPoliceSupport}
+          onChange={(e) => {
+            const newValue = Math.max(0, parseInt(e.target.value) || 0);
+            incident.noPoliceSupport = newValue;
+          }}
+          className="w-full px-2 py-1 border rounded text-sm"
+        />
       </div>
       <div>
-        <div className="text-gray-500 text-xs">Firefighter Support</div>
-        <div>{incident.noFirefighterSupport}</div>
+        <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
+        <input 
+          type="number"
+          min="0"
+          value={incident.noFirefighterSupport}
+          onChange={(e) => {
+            const newValue = Math.max(0, parseInt(e.target.value) || 0);
+            incident.noFirefighterSupport = newValue;
+          }}
+          className="w-full px-2 py-1 border rounded text-sm"
+        />
       </div>
     </div>
     
@@ -336,7 +354,7 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="w-64">
+    <form onSubmit={handleSubmit} className="w-48">
       <h3 className="font-medium text-lg mb-2">Add New Incident</h3>
       
       <div className="mb-2">
@@ -396,7 +414,7 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
 
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div>
-          <label className="block text-gray-700 text-xs mb-1">Police Support</label>
+          <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
           <input 
             type="number"
             min="0"
@@ -406,7 +424,7 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
           />
         </div>
         <div>
-          <label className="block text-gray-700 text-xs mb-1">Firefighter Support</label>
+          <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
           <input 
             type="number"
             min="0"
