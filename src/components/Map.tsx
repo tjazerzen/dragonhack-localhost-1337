@@ -2,11 +2,12 @@
 
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import { useIncidentStore } from '@/store/incidentStore';
-import { IncidentStatus } from '@/types/incidents';
+import { IncidentStatus, Incident } from '@/types/incidents';
+import { getNearestPhotoUrl } from '../utils/placesApi';
 
 interface MapProps {
   position: LatLngExpression;
@@ -24,8 +25,42 @@ const statusColors: Record<IncidentStatus, string> = {
   resolved: 'text-green-600',
 };
 
+interface PopupContentProps {
+  incident: Incident;
+  photoUrl: string | null;
+}
+
+const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl }) => (
+  <div className="p-2 text-sm">
+    <h3 className="font-medium">{incident.summary}</h3>
+    <p className="text-gray-500 text-xs mt-1">
+      {incident.type.replace('_', ' ').toUpperCase()} • {incident.location}
+    </p>
+    <p className="text-gray-500 text-xs">
+      {incident.timestamp} • {(incident.distance / 1000).toFixed(1)}km away
+    </p>
+    <span className={`inline-block px-2 py-0.5 rounded-full text-xs mt-2 font-medium ${statusColors[incident.status]}`}>
+      {incident.status.toUpperCase()}
+    </span>
+    {photoUrl && (
+      <div className="mt-3">
+        <img 
+          src={photoUrl} 
+          alt="Location photo" 
+          className="w-full h-48 object-cover rounded-lg"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+          }}
+        />
+      </div>
+    )}
+  </div>
+);
+
 export default function Map({ position }: MapProps) {
   const incidents = useIncidentStore((state) => state.incidents);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     // @ts-expect-error - Leaflet types are not properly set up for Next.js
@@ -36,6 +71,13 @@ export default function Map({ position }: MapProps) {
       shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
     });
   }, []);
+
+  const handleMarkerClick = async (incident: Incident) => {
+    if (!photoUrls[incident.id]) {
+      const photoUrl = await getNearestPhotoUrl(incident.coordinates[0], incident.coordinates[1]);
+      setPhotoUrls(prev => ({ ...prev, [incident.id]: photoUrl }));
+    }
+  };
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full overflow-hidden relative">
@@ -60,20 +102,15 @@ export default function Map({ position }: MapProps) {
               iconAnchor: [12, 12],
               popupAnchor: [0, -12],
             })}
+            eventHandlers={{
+              click: () => handleMarkerClick(incident),
+            }}
           >
             <Popup className="rounded-lg shadow-lg border border-gray-200">
-              <div className="p-2 text-sm">
-                <h3 className="font-medium">{incident.summary}</h3>
-                <p className="text-gray-500 text-xs mt-1">
-                  {incident.type.replace('_', ' ').toUpperCase()} • {incident.location}
-                </p>
-                <p className="text-gray-500 text-xs">
-                  {incident.timestamp} • {(incident.distance / 1000).toFixed(1)}km away
-                </p>
-                <span className={`inline-block px-2 py-0.5 rounded-full text-xs mt-2 font-medium ${statusColors[incident.status]}`}>
-                  {incident.status.toUpperCase()}
-                </span>
-              </div>
+              <PopupContent 
+                incident={incident} 
+                photoUrl={photoUrls[incident.id]} 
+              />
             </Popup>
           </Marker>
         ))}
