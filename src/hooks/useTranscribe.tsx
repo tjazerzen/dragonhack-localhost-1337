@@ -34,8 +34,28 @@ export default function useTranscribe() {
 
     recordTranscribe.current.start({
       model: 'stt-rt-preview',
-      languageHints: ['en'],
+      languageHints: ['en', 'sl'],
       enableSpeakerTags: true,
+      context: `
+        You will transcribe a conversation between a caller in distress and an emergency operator. 
+        The caller will be speaking in English. The operator will be speaking in English. 
+        The locations the caller will mention will be in Slovenia.
+        Ljubljana.
+        Maribor.
+        Celje.
+        Jesenice.
+        Kranj.
+        Koper.
+        Nova Gorica.
+        Postojna.
+        Piran.
+        Izola.
+        Ptuj.
+        Cesta.
+        Ulica.
+        Trg.
+        Park.
+      `,
       onFinished: () => {
         console.log('transcription finished');
       },
