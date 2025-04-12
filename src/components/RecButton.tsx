@@ -80,7 +80,7 @@ export default function RecButton() {
             duration: 0.3,
             layout: { duration: 0.3 }
           }}
-          className='text-medium w-fit text-center'
+          className={`text-medium w-fit text-center ${!isRecording ? 'text-red-600' : ''}`}
         >
           {isRecording ? 'Recording...' : 'Record'}
         </motion.p>

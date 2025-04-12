@@ -14,6 +14,7 @@ export default function NavBar() {
   return (
     <nav className="bg-sidebar text-white w-full p-3 flex justify-between items-center">
       <div className="flex items-center">
+        
         <h1 className="text-2xl font-bold mr-6">
           <span className="text-red-500">nine</span><span className="text-blue-500">line</span>🚨
         </h1>
