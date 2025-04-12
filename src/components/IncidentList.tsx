@@ -161,7 +161,7 @@ export default function IncidentList() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <div className="h-full bg-white">
+    <div className="bg-white">
       <div className="p-4 border-b">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">

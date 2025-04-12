@@ -4,6 +4,7 @@ import './globals.css';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import SideBar from '@/components/SideBar';
 import NavBar from '@/components/NavBar';
+import Footer from '@/components/Footer';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -36,6 +37,7 @@ export default function RootLayout({
             <main className="flex-1">
               <NavBar />
               {children} 
+              <Footer />    
             </main>
           </div>
         </SidebarProvider>
