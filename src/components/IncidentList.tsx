@@ -34,6 +34,7 @@ const statusLabels: Record<IncidentStatus, string> = {
 export default function IncidentList() {
   const incidents = useIncidentStore((state) => state.incidents);
   const selectIncident = useIncidentStore((state) => state.selectIncident);
+  const { activeSidePanel, switchSidePanel } = useLayoutStore();
   const toggleIncidentPanel = useLayoutStore((state) => state.toggleIncidentPanel);
   const [searchText, setSearchText] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -172,6 +173,29 @@ export default function IncidentList() {
               <FaChevronLeft className="text-gray-500" />
             </button>
           </div>
+        </div>
+        
+        <div className="flex mt-4 mb-3">
+          <button 
+            className={`px-4 py-2 rounded-l-md text-sm font-medium flex items-center justify-center flex-1 ${
+              activeSidePanel === 'incidents' 
+                ? 'bg-red-600 text-white' 
+                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+            }`}
+            onClick={() => switchSidePanel('incidents')}
+          >
+            Emergencies
+          </button>
+          <button 
+            className={`px-4 py-2 rounded-r-md text-sm font-medium flex items-center justify-center flex-1 ${
+              activeSidePanel === 'forces' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+            }`}
+            onClick={() => switchSidePanel('forces')}
+          >
+            Support Units
+          </button>
         </div>
         
         <div className="mt-3 flex gap-2 items-center">
