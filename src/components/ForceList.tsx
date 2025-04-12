@@ -1,44 +1,31 @@
-import { useIncidentStore } from '@/store/incidentStore';
-import { IncidentStatus, IncidentType } from '@/types/incidents';
-import { FaExclamationCircle, FaExclamationTriangle, FaCheckCircle, FaSearch, FaChevronLeft } from 'react-icons/fa';
+import { useForceStore } from '@/store/forceStore';
+import { ForceType, ForceStatus } from '@/types/forces';
+import { FaChevronLeft } from 'react-icons/fa6';
+import { FaSearch, FaShieldAlt, FaFire, FaCircle } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 
-const statusConfig: Record<IncidentStatus, { color: string; icon: IconType }> = {
-  critical: { color: 'bg-red-100 text-red-600', icon: FaExclamationCircle },
-  moderate: { color: 'bg-orange-100 text-orange-600', icon: FaExclamationTriangle },
-  resolved: { color: 'bg-green-100 text-green-600', icon: FaCheckCircle },
+const forceTypeConfig: Record<ForceType, { color: string; icon: IconType; label: string }> = {
+  police: { color: 'bg-blue-100 text-blue-600', icon: FaShieldAlt, label: 'Police' },
+  firefighter: { color: 'bg-red-100 text-red-600', icon: FaFire, label: 'Firefighter' },
 };
 
-// Make incident type labels more readable
-const typeLabels: Record<IncidentType, string> = {
-  fire: 'Fire',
-  flood: 'Flood',
-  earthquake: 'Earthquake',
-  traffic_accident: 'Traffic Accident',
-  medical: 'Medical',
-  hazmat: 'Hazmat',
-  structural: 'Structural',
-  rescue: 'Rescue',
-  power_outage: 'Power Outage',
+const forceStatusConfig: Record<ForceStatus, { color: string; label: string }> = {
+  idle: { color: 'bg-gray-100 text-gray-600', label: 'Idle' },
+  on_road: { color: 'bg-blue-100 text-blue-600', label: 'On Road' },
 };
 
-// Make status labels more readable
-const statusLabels: Record<IncidentStatus, string> = {
-  critical: 'Critical',
-  moderate: 'Moderate',
-  resolved: 'Resolved',
-};
-
-export default function IncidentList() {
-  const incidents = useIncidentStore((state) => state.incidents);
-  const selectIncident = useIncidentStore((state) => state.selectIncident);
+export default function ForceList() {
+  const forces = useForceStore((state) => state.forces);
+  const selectedForceId = useForceStore((state) => state.selectedForceId);
+  const selectForce = useForceStore((state) => state.selectForce);
   const toggleIncidentPanel = useLayoutStore((state) => state.toggleIncidentPanel);
+  
   const [searchText, setSearchText] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedTypes, setSelectedTypes] = useState<IncidentType[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<IncidentStatus[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<ForceType[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<ForceStatus[]>([]);
   const filterRef = useRef<HTMLDivElement>(null);
 
   // Close filter dropdown when clicking outside
@@ -61,15 +48,15 @@ export default function IncidentList() {
       resetFilters();
     };
     
-    window.addEventListener('resetFilters', handleResetFilters);
+    window.addEventListener('resetForceFilters', handleResetFilters);
     
     return () => {
-      window.removeEventListener('resetFilters', handleResetFilters);
+      window.removeEventListener('resetForceFilters', handleResetFilters);
     };
   }, []);
 
   // Toggle a type filter
-  const toggleTypeFilter = (type: IncidentType) => {
+  const toggleTypeFilter = (type: ForceType) => {
     const newSelectedTypes = selectedTypes.includes(type)
       ? selectedTypes.filter(t => t !== type)
       : [...selectedTypes, type];
@@ -77,7 +64,7 @@ export default function IncidentList() {
     setSelectedTypes(newSelectedTypes);
     
     // Emit filter change event
-    window.dispatchEvent(new CustomEvent('filtersChanged', {
+    window.dispatchEvent(new CustomEvent('forceFiltersChanged', {
       detail: {
         searchText,
         selectedTypes: newSelectedTypes,
@@ -87,7 +74,7 @@ export default function IncidentList() {
   };
 
   // Toggle a status filter
-  const toggleStatusFilter = (status: IncidentStatus) => {
+  const toggleStatusFilter = (status: ForceStatus) => {
     const newSelectedStatuses = selectedStatuses.includes(status)
       ? selectedStatuses.filter(s => s !== status)
       : [...selectedStatuses, status];
@@ -95,7 +82,7 @@ export default function IncidentList() {
     setSelectedStatuses(newSelectedStatuses);
     
     // Emit filter change event
-    window.dispatchEvent(new CustomEvent('filtersChanged', {
+    window.dispatchEvent(new CustomEvent('forceFiltersChanged', {
       detail: {
         searchText,
         selectedTypes,
@@ -110,7 +97,7 @@ export default function IncidentList() {
     setSelectedStatuses([]);
     
     // Emit filter change event
-    window.dispatchEvent(new CustomEvent('filtersChanged', {
+    window.dispatchEvent(new CustomEvent('forceFiltersChanged', {
       detail: {
         searchText,
         selectedTypes: [],
@@ -122,35 +109,35 @@ export default function IncidentList() {
   // Check if filters are active
   const hasActiveFilters = selectedTypes.length > 0 || selectedStatuses.length > 0;
 
-  const filteredIncidents = useMemo(() => {
-    let filtered = incidents;
+  const filteredForces = useMemo(() => {
+    let filtered = forces;
     
     // Apply text search filter
     if (searchText.trim()) {
       const searchLower = searchText.toLowerCase().trim();
-      filtered = filtered.filter(incident => 
-        incident.summary.toLowerCase().includes(searchLower) || 
-        incident.location.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(force => 
+        force.callsign.toLowerCase().includes(searchLower) || 
+        force.location.toLowerCase().includes(searchLower)
       );
     }
     
     // Apply type filters
     if (selectedTypes.length > 0) {
-      filtered = filtered.filter(incident => selectedTypes.includes(incident.type));
+      filtered = filtered.filter(force => selectedTypes.includes(force.type));
     }
     
     // Apply status filters
     if (selectedStatuses.length > 0) {
-      filtered = filtered.filter(incident => selectedStatuses.includes(incident.status));
+      filtered = filtered.filter(force => selectedStatuses.includes(force.status));
     }
     
     return filtered;
-  }, [incidents, searchText, selectedTypes, selectedStatuses]);
+  }, [forces, searchText, selectedTypes, selectedStatuses]);
 
   // Emit initial filter state on component mount
   useEffect(() => {
     // Emit filter change event with initial state
-    window.dispatchEvent(new CustomEvent('filtersChanged', {
+    window.dispatchEvent(new CustomEvent('forceFiltersChanged', {
       detail: {
         searchText,
         selectedTypes,
@@ -164,6 +151,7 @@ export default function IncidentList() {
       <div className="p-4 border-b">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
+            {/* <h2 className="text-xl font-semibold">Support Units</h2> */}
             <button 
               className="p-1 hover:bg-gray-100 rounded-full"
               onClick={toggleIncidentPanel}
@@ -181,7 +169,7 @@ export default function IncidentList() {
             </div>
             <input
               type="text"
-              placeholder="Search a location"
+              placeholder="Search units"
               className="py-2 pl-10 pr-3 w-full border rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               value={searchText}
               onChange={(e) => {
@@ -189,7 +177,7 @@ export default function IncidentList() {
                 setSearchText(newSearchText);
                 
                 // Emit filter change event
-                window.dispatchEvent(new CustomEvent('filtersChanged', {
+                window.dispatchEvent(new CustomEvent('forceFiltersChanged', {
                   detail: {
                     searchText: newSearchText,
                     selectedTypes,
@@ -215,19 +203,19 @@ export default function IncidentList() {
             {isFilterOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-10">
                 <div className="p-3 border-b">
-                  <h3 className="font-medium text-gray-700">Filter by Type</h3>
+                  <h3 className="font-medium text-gray-700">Filter by Unit Type</h3>
                   <div className="mt-2 space-y-1.5">
-                    {Object.entries(typeLabels).map(([type, label]) => (
+                    {['police', 'firefighter'].map((type) => (
                       <div key={type} className="flex items-center">
                         <input
                           type="checkbox"
                           id={`type-${type}`}
-                          checked={selectedTypes.includes(type as IncidentType)}
-                          onChange={() => toggleTypeFilter(type as IncidentType)}
+                          checked={selectedTypes.includes(type as ForceType)}
+                          onChange={() => toggleTypeFilter(type as ForceType)}
                           className="w-4 h-4 text-blue-600 rounded"
                         />
                         <label htmlFor={`type-${type}`} className="ml-2 text-sm text-gray-700">
-                          {label}
+                          {type === 'police' ? 'Police' : 'Firefighter'}
                         </label>
                       </div>
                     ))}
@@ -237,17 +225,17 @@ export default function IncidentList() {
                 <div className="p-3 border-b">
                   <h3 className="font-medium text-gray-700">Filter by Status</h3>
                   <div className="mt-2 space-y-1.5">
-                    {Object.entries(statusLabels).map(([status, label]) => (
+                    {['idle', 'on_road'].map((status) => (
                       <div key={status} className="flex items-center">
                         <input
                           type="checkbox"
                           id={`status-${status}`}
-                          checked={selectedStatuses.includes(status as IncidentStatus)}
-                          onChange={() => toggleStatusFilter(status as IncidentStatus)}
+                          checked={selectedStatuses.includes(status as ForceStatus)}
+                          onChange={() => toggleStatusFilter(status as ForceStatus)}
                           className="w-4 h-4 text-blue-600 rounded"
                         />
                         <label htmlFor={`status-${status}`} className="ml-2 text-sm text-gray-700">
-                          {label}
+                          {status === 'idle' ? 'Idle' : 'On Road'}
                         </label>
                       </div>
                     ))}
@@ -270,44 +258,44 @@ export default function IncidentList() {
         <div className="flex justify-between mt-4">
           <div>
             <span className="text-gray-600">Total</span>
-            <div className="text-2xl font-bold">{filteredIncidents.length}</div>
+            <div className="text-2xl font-bold">{filteredForces.length}</div>
           </div>
           <div>
-            <span className="text-gray-600">Critical</span>
-            <div className="text-2xl font-bold text-red-600">
-              {filteredIncidents.filter(i => i.status === 'critical').length}
+            <span className="text-gray-600">Police</span>
+            <div className="text-2xl font-bold text-blue-600">
+              {filteredForces.filter(f => f.type === 'police').length}
             </div>
           </div>
           <div>
-            <span className="text-gray-600">Resolved</span>
-            <div className="text-2xl font-bold text-green-600">
-              {filteredIncidents.filter(i => i.status === 'resolved').length}
+            <span className="text-gray-600">Firefighters</span>
+            <div className="text-2xl font-bold text-red-600">
+              {filteredForces.filter(f => f.type === 'firefighter').length}
             </div>
           </div>
         </div>
       </div>
       
       <div className="overflow-y-auto h-[calc(100%-180px)]">
-        {filteredIncidents.map((incident) => {
-          const StatusIcon = statusConfig[incident.status].icon;
+        {filteredForces.map((force) => {
+          const ForceIcon = forceTypeConfig[force.type].icon;
           return (
             <div
-              key={incident.id}
-              className="p-4 border-b hover:bg-gray-50 cursor-pointer"
-              onClick={() => selectIncident(incident.id)}
+              key={force.id}
+              className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${selectedForceId === force.id ? 'bg-blue-50' : ''}`}
+              onClick={() => selectForce(force.id)}
             >
               <div className="flex items-start gap-3">
-                <StatusIcon className={`mt-1 ${statusConfig[incident.status].color}`} />
+                <ForceIcon className={`mt-1 ${forceTypeConfig[force.type].color}`} />
                 <div>
-                  <h3 className="font-medium">{incident.summary}</h3>
+                  <h3 className="font-medium">{force.callsign}</h3>
                   <p className="text-gray-500 text-xs mt-1">
-                    {incident.type.replace('_', ' ').toUpperCase()} • {incident.location}
+                    {forceTypeConfig[force.type].label} • {force.location}
                   </p>
-                  <p className="text-gray-500 text-xs">
-                    {incident.timestamp}
-                  </p>
-                  <div className={`inline-block px-2 py-1 rounded-full text-xs mt-2 ${statusConfig[incident.status].color}`}>
-                    {incident.status.toUpperCase()}
+                  <div className="flex items-center mt-2">
+                    <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${forceStatusConfig[force.status].color}`}>
+                      <FaCircle className={`mr-1 ${force.status === 'idle' ? 'text-gray-500' : 'text-blue-500'}`} size={8} />
+                      {forceStatusConfig[force.status].label}
+                    </div>
                   </div>
                 </div>
               </div>
