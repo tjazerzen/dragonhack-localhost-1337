@@ -7,6 +7,7 @@ import type { LatLngExpression } from 'leaflet';
 import IncidentList from '@/components/IncidentList';
 import CollapsedPanel from '@/components/CollapsedPanel';
 import { useLayoutStore } from '@/store/layoutStore';
+import { useEffect } from 'react';
 
 // Dynamically import the Map component with no SSR
 const Map = dynamic(() => import('@/components/Map'), {
@@ -19,11 +20,13 @@ export default function MapPanel() {
   const isIncidentPanelCollapsed = useLayoutStore((state) => state.isIncidentPanelCollapsed);
   const position: LatLngExpression = [46.052091, 14.468414];
 
-  // Add an admin message
-  addMessage('Hello, how can I help you?', 'admin');
-
-  // Add a caller message
-  addMessage('I need assistance with my account', 'caller');
+  // Move the message calls into a useEffect hook that runs once on mount
+  useEffect(() => {
+    // Add an admin message
+    addMessage('Hello, how can I help you?', 'admin');
+    // Add a caller message
+    addMessage('I need assistance with my account', 'caller');
+  }, [addMessage]); // Include addMessage in the dependency array
 
   return (
     <div className="flex flex-row h-[100vh] w-full">
