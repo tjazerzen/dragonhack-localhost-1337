@@ -16,7 +16,7 @@ export default function NavBar() {
       <div className="flex items-center">
         
         <h1 className="text-2xl font-bold mr-6">
-          <span className="text-red-500">nine</span><span className="text-blue-500">line</span>🚨
+          <span className="text-red-600">nine</span><span className="text-blue-600">line</span>🚨
         </h1>
       </div>
       <button 

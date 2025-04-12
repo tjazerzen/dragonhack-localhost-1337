@@ -64,8 +64,8 @@ export default function RecButton() {
         }}
       >
         <Circle 
-          color={isRecording ? 'white' : 'red'} 
-          fill={isRecording ? 'white' : 'red'} 
+          color={isRecording ? 'white' : '#dc2626'}
+          fill={isRecording ? 'white' : '#dc2626'}
           className='w-4 h-4 transition-colors duration-300'
         />
       </motion.div>

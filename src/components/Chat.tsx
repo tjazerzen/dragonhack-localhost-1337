@@ -28,7 +28,7 @@ export default function Chat() {
           <div
             className={`max-w-[70%] rounded-3xl p-3 ${
               message.sender === 'admin'
-                ? 'bg-blue-500 text-white'
+                ? 'bg-blue-600 text-white'
                 : 'bg-gray-200 text-gray-800'
             }`}
           >
