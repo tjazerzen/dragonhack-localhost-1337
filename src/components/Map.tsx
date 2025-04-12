@@ -2,7 +2,7 @@
 
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState, useRef, createContext, useContext } from 'react';
+import { useEffect, useState, useRef, createContext, useContext, useMemo } from 'react';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 import { useIncidentStore } from '@/store/incidentStore';
@@ -431,6 +431,64 @@ export default function Map({ position }: MapProps) {
   const [isLoading, setIsLoading] = useState(false);
   const markerRefs = useRef<Record<string, L.Marker>>({});
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Add state to track applied filters
+  const [searchText, setSearchText] = useState('');
+  const [selectedTypes, setSelectedTypes] = useState<IncidentType[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<IncidentStatus[]>([]);
+
+  // Add effect to synchronize filter state with IncidentList component
+  useEffect(() => {
+    // Define a function to handle filter changes
+    const handleFiltersChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        searchText: string;
+        selectedTypes: IncidentType[];
+        selectedStatuses: IncidentStatus[];
+      }>;
+      
+      if (customEvent.detail) {
+        const { searchText, selectedTypes, selectedStatuses } = customEvent.detail;
+        setSearchText(searchText || '');
+        setSelectedTypes(selectedTypes || []);
+        setSelectedStatuses(selectedStatuses || []);
+      }
+    };
+
+    // Add event listener for filter changes
+    window.addEventListener('filtersChanged', handleFiltersChange);
+
+    // Clean up event listener on unmount
+    return () => {
+      window.removeEventListener('filtersChanged', handleFiltersChange);
+    };
+  }, []);
+
+  // Filter incidents based on the same criteria as in IncidentList
+  const filteredIncidents = useMemo(() => {
+    let filtered = incidents;
+    
+    // Apply text search filter
+    if (searchText.trim()) {
+      const searchLower = searchText.toLowerCase().trim();
+      filtered = filtered.filter(incident => 
+        incident.summary.toLowerCase().includes(searchLower) || 
+        incident.location.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Apply type filters
+    if (selectedTypes.length > 0) {
+      filtered = filtered.filter(incident => selectedTypes.includes(incident.type));
+    }
+    
+    // Apply status filters
+    if (selectedStatuses.length > 0) {
+      filtered = filtered.filter(incident => selectedStatuses.includes(incident.status));
+    }
+    
+    return filtered;
+  }, [incidents, searchText, selectedTypes, selectedStatuses]);
 
   // Add console log to debug
   useEffect(() => {
@@ -529,6 +587,24 @@ export default function Map({ position }: MapProps) {
         </div>
       )}
       
+      {/* Add filter indicator */}
+      {(selectedTypes.length > 0 || selectedStatuses.length > 0) && (
+        <div className="absolute top-3 right-3 bg-white py-1 px-3 rounded-full border shadow-sm z-50 text-sm flex items-center">
+          <span className="font-medium text-gray-700">Filtered: </span>
+          <span className="ml-1 text-blue-600 font-medium">{filteredIncidents.length} incidents</span>
+          <button 
+            className="ml-2 text-gray-500 hover:text-gray-700"
+            onClick={() => {
+              // Emit reset event
+              window.dispatchEvent(new CustomEvent('resetFilters'));
+            }}
+            title="Clear filters"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      
       <MarkerContext.Provider value={markerRefs}>
         <MapContainer 
           center={position} 
@@ -538,7 +614,7 @@ export default function Map({ position }: MapProps) {
           className="h-full w-full z-0"
         >
           <MapContent 
-            incidents={incidents}
+            incidents={filteredIncidents}
             handleMarkerClick={handleMarkerClick}
             photoUrls={photoUrls}
             streetViewUrls={streetViewUrls}
