@@ -22,8 +22,8 @@ export default function MapPanel() {
   addMessage('I need assistance with my account', 'caller');
 
   return (
-    <div className="flex flex-row h-[100vh] w-full">
-      <div className="w-9/12 h-full relative">
+    <div className="flex flex-row w-full">
+      <div className="w-9/12 relative">
         <div className="h-full w-full z-10">
           <Map position={position} />
         </div>

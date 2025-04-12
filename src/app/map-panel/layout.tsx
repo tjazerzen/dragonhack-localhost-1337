@@ -5,5 +5,5 @@ export default function MapPanelLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="h-[100vh] w-full">{children}</div>;
+  return <div className="w-full">{children}</div>;
 }
