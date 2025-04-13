@@ -7,6 +7,28 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 import { statusIcons } from '@/utils/mapUtils';
 
+// Helper function to parse time string (e.g., "10:31AM") into minutes since midnight
+const parseTimeString = (timeString: string): number => {
+  const [time, modifier] = timeString.split(/(AM|PM)/);
+  let [hours, minutes] = time.split(':').map(Number);
+
+  if (modifier === 'PM' && hours !== 12) {
+    hours += 12;
+  }
+  if (modifier === 'AM' && hours === 12) { // Midnight case
+    hours = 0;
+  }
+  
+  return hours * 60 + minutes;
+};
+
+// Severity order for sorting
+const severityOrder: Record<IncidentStatus, number> = {
+  critical: 1,
+  moderate: 2,
+  resolved: 3,
+};
+
 // Make incident type labels more readable
 const typeLabels: Record<IncidentType, string> = {
   fire: 'Fire',
@@ -32,6 +54,13 @@ const statusColorConfig: Record<IncidentStatus, string> = {
   critical: 'bg-red-100 text-red-600',
   moderate: 'bg-orange-100 text-orange-600',
   resolved: 'bg-green-100 text-green-600',
+};
+
+// Define subtle background colors for incident cards
+const statusBgColorConfig: Record<IncidentStatus, string> = {
+  critical: 'bg-red-50 hover:bg-red-100',
+  moderate: 'bg-orange-50 hover:bg-orange-100',
+  resolved: 'bg-green-50 hover:bg-green-100',
 };
 
 export default function IncidentList() {
@@ -147,6 +176,20 @@ export default function IncidentList() {
       filtered = filtered.filter(incident => selectedStatuses.includes(incident.status));
     }
     
+    // Sort incidents: Severity (desc), then Time (desc)
+    filtered.sort((a, b) => {
+      // Compare severity
+      const severityDiff = severityOrder[a.status] - severityOrder[b.status];
+      if (severityDiff !== 0) {
+        return severityDiff;
+      }
+      
+      // Compare time (most recent first)
+      const timeA = parseTimeString(a.timestamp);
+      const timeB = parseTimeString(b.timestamp);
+      return timeB - timeA; 
+    });
+    
     return filtered;
   }, [incidents, searchText, selectedTypes, selectedStatuses]);
 
@@ -163,7 +206,7 @@ export default function IncidentList() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <div className="h-full bg-white flex flex-col w-full">
+    <div className="h-full bg-sidebar flex flex-col w-full">
       <div className="flex">
         <button 
           className={`px-4 py-3 text-sm font-medium flex items-center justify-center flex-1 ${
@@ -227,7 +270,7 @@ export default function IncidentList() {
             </button>
             
             {isFilterOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-10">
+              <div className="absolute right-0 mt-2 w-64 bg-sidebar rounded-lg shadow-lg border z-10">
                 <div className="p-3 border-b">
                   <h3 className="font-medium text-gray-700">Filter by Type</h3>
                   <div className="mt-2 space-y-1.5">
@@ -306,7 +349,7 @@ export default function IncidentList() {
           return (
             <div
               key={incident.id}
-              className="p-4 border-b hover:bg-gray-50 cursor-pointer"
+              className={`p-4 border-b cursor-pointer ${statusBgColorConfig[incident.status]}`}
               onClick={() => selectIncident(incident.id)}
             >
               <div className="flex items-start gap-3">

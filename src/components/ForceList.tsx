@@ -1,10 +1,22 @@
 import { useForceStore } from '@/store/forceStore';
 import { ForceType, ForceStatus } from '@/types/forces';
-import { FaChevronLeft } from 'react-icons/fa6';
-import { FaSearch, FaCircle } from 'react-icons/fa';
+import { FaChevronLeft, FaSearch, FaCircle } from 'react-icons/fa';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 
+// Define sort order for Force Types
+const typeSortOrder: Record<ForceType, number> = {
+  police: 1,
+  firefighter: 2,
+};
+
+// Define sort order for Force Statuses
+const statusSortOrder: Record<ForceStatus, number> = {
+  idle: 1,
+  on_road: 2,
+};
+
+// Restore local definitions
 const forceTypeConfig: Record<ForceType, { label: string }> = {
   police: { label: 'Police' },
   firefighter: { label: 'Firefighter' },
@@ -25,6 +37,12 @@ const forceIconPaths: Record<ForceType, Record<ForceStatus, string>> = {
     idle: '/firefighter-transparent-idle.png',
     on_road: '/firefighter-transparent-not-idle.png',
   }
+};
+
+// Define styles for force type cards (background, hover, outline)
+const forceTypeStyleConfig: Record<ForceType, string> = {
+  police: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
+  firefighter: 'bg-red-50 hover:bg-red-100 border-red-200',
 };
 
 export default function ForceList() {
@@ -142,6 +160,19 @@ export default function ForceList() {
       filtered = filtered.filter(force => selectedStatuses.includes(force.status));
     }
     
+    // Sort forces: Type (Police > Fire), then Status (Idle > On Road)
+    filtered.sort((a, b) => {
+      // Compare type
+      const typeDiff = typeSortOrder[a.type] - typeSortOrder[b.type];
+      if (typeDiff !== 0) {
+        return typeDiff;
+      }
+      
+      // Compare status (Idle first)
+      const statusDiff = statusSortOrder[a.status] - statusSortOrder[b.status];
+      return statusDiff;
+    });
+    
     return filtered;
   }, [forces, searchText, selectedTypes, selectedStatuses]);
 
@@ -158,7 +189,7 @@ export default function ForceList() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <div className="h-full bg-white flex flex-col w-full">
+    <div className="h-full bg-sidebar flex flex-col w-full">
       <div className="flex">
         <button 
           className={`px-4 py-3 text-sm font-medium flex items-center justify-center flex-1 ${
@@ -302,7 +333,7 @@ export default function ForceList() {
           return (
             <div
               key={force.id}
-              className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${selectedForceId === force.id ? 'bg-blue-50' : ''}`}
+              className={`p-4 border-b border-b-gray-200 cursor-pointer border-l-4 ${forceTypeStyleConfig[force.type]} ${selectedForceId === force.id ? 'ring-2 ring-offset-1 ring-blue-400' : ''}`}
               onClick={() => selectForce(force.id)}
             >
               <div className="flex items-start gap-3">
@@ -330,4 +361,4 @@ export default function ForceList() {
       </div>
     </div>
   );
-} 
+}

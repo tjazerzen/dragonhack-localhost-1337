@@ -133,7 +133,7 @@ export default function RecButton() {
   return (
     <Button 
       variant={null}
-      className={`h-full px-4 py-3 flex flex-1 flex-row justify-center items-center gap-2 hover:cursor-pointer transition-all duration-300 ease-in-out text-sm font-medium rounded-none ${
+      className={`h-full px-4 py-3 flex w-1/2 flex-row justify-center items-center gap-2 hover:cursor-pointer transition-all duration-300 ease-in-out text-sm font-medium rounded-none ${
         isRecording 
           ? 'bg-red-600 text-white hover:bg-red-700' 
           : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
