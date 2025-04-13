@@ -303,9 +303,22 @@ export const useIncidentStore = create<IncidentStore>()((set, get) => ({
   extractedCoordinates: null,
   selectIncident: (id) => set({ selectedIncidentId: id }),
   startAddingIncident: () => set({ isAddingIncident: true }),
-  cancelAddingIncident: () => set({ isAddingIncident: false }),
+  cancelAddingIncident: () => set({ 
+    isAddingIncident: false,
+    extractedCoordinates: null,
+    extractedLocation: null
+  }),
   setExtractedLocation: (location) => set({ extractedLocation: location }),
-  setExtractedCoordinates: (coordinates) => set({ extractedCoordinates: coordinates }),
+  setExtractedCoordinates: (coordinates) => {
+    if (coordinates) {
+      set({ 
+        extractedCoordinates: coordinates,
+        isAddingIncident: true 
+      });
+    } else {
+      set({ extractedCoordinates: coordinates });
+    }
+  },
   addIncident: (incidentData) => {
     const { incidents } = get();
 
@@ -333,7 +346,9 @@ export const useIncidentStore = create<IncidentStore>()((set, get) => ({
 
     set({
       incidents: [...incidents, newIncident],
-      isAddingIncident: false
+      isAddingIncident: false,
+      extractedCoordinates: null,
+      extractedLocation: null
     });
   }
 })); 

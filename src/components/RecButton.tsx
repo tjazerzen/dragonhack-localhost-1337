@@ -63,25 +63,59 @@ export default function RecButton() {
     }
   };
 
+  const callGenerateReportAgent = async () => {
+    const currentMessages = useChatStore.getState().messages;
+    const transcript = currentMessages
+      .map(msg => `${msg.sender}: ${msg.content}`)
+      .join('\n');
+
+    if (!transcript) {
+      console.log('No transcript to process, skipping API call.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/generate-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const report = data.report;
+
+      console.log('Generate report agent report received:', report);
+    } catch (error) {
+      console.error('Error calling generate report agent API:', error);
+    }
+  };
+
   useEffect(() => {
     if (isRecording) {
       setCoordinatesFoundThisSession(false);
       startTranscription();
     } else {
       stopTranscription();
+      callGenerateReportAgent();
     }
   }, [isRecording, startTranscription, stopTranscription]);
 
   useEffect(() => {
     if (text) {
       const match = text.match(/spk:(\d+)([\s\S]*)/);
+      console.log('tokenized text: ', text);
       if (match) {
         const [, speakerNumber, content] = match;
         const newSpeaker = speakerNumber === '1' ? 'admin' : 'caller';
 
         if (newSpeaker !== currentSpeaker) {
           setCurrentSpeaker(newSpeaker);
-          const newMessageId = addMessage(content.trim(), newSpeaker);
+          const newMessageId = addMessage(content, newSpeaker);
           setCurrentMessageId(newMessageId);
           callGeocodeAgent();
         } else if (currentMessageId) {
@@ -91,7 +125,7 @@ export default function RecButton() {
         appendToMessage(currentMessageId, text);
       }
     } 
-  }, [text, addMessage, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession, callGeocodeAgent]);
+  }, [text, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession]);
 
   return (
     <Button 
