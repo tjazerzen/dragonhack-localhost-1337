@@ -20,18 +20,18 @@ export default function RecButton() {
 
   const callGeocodeAgent = async () => {
     if (coordinatesFoundThisSession) {
-      console.log("Coordinates already found this session, skipping API call.");
+      console.log('Coordinates already found this session, skipping API call.');
       return;
     }
 
-    console.log("Speaker changed, calling geocode agent API...");
+    console.log('Speaker changed, calling geocode agent API...');
     const currentMessages = useChatStore.getState().messages;
     const transcript = currentMessages
       .map(msg => `${msg.sender}: ${msg.content}`)
-      .join("\n");
+      .join('\n');
 
     if (!transcript) {
-      console.log("No transcript to process, skipping API call.");
+      console.log('No transcript to process, skipping API call.');
       return;
     }
 
@@ -51,15 +51,15 @@ export default function RecButton() {
       const coordinates = data.coordinates;
 
       if (coordinates) {
-        console.log("Geocode agent coordinates received:", coordinates);
+        console.log('Geocode agent coordinates received:', coordinates);
         setExtractedCoordinates(coordinates);
         setCoordinatesFoundThisSession(true);
       } else {
-        console.log("Geocode agent returned no coordinates.");
+        console.log('Geocode agent returned no coordinates.');
       }
 
     } catch (error) {
-      console.error("Error calling geocode agent API:", error);
+      console.error('Error calling geocode agent API:', error);
     }
   };
 
@@ -90,8 +90,8 @@ export default function RecButton() {
       } else if (currentMessageId) {
         appendToMessage(currentMessageId, text);
       }
-    }
-  }, [text, addMessage, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession]);
+    } 
+  }, [text, addMessage, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession, callGeocodeAgent]);
 
   return (
     <Button 
