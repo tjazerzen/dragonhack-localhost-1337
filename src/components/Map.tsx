@@ -53,7 +53,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
         </span>
       </div>
     </div>
-    
+
     {isLoading ? (
       <div className="h-48 flex items-center justify-center bg-gray-100 rounded-lg">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600"></div>
@@ -63,9 +63,9 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
         {photoUrl && (
           <div>
             <div className="text-gray-500 text-xs mb-1">Map View</div>
-            <img 
-              src={photoUrl} 
-              alt="Location map" 
+            <img
+              src={photoUrl}
+              alt="Location map"
               className="w-full h-40 object-cover rounded-lg"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -74,13 +74,13 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
             />
           </div>
         )}
-        
+
         {streetViewUrl && (
           <div>
             <div className="text-gray-500 text-xs mb-1">Street View</div>
-            <img 
-              src={streetViewUrl} 
-              alt="Street view" 
+            <img
+              src={streetViewUrl}
+              alt="Street view"
               className="w-full h-40 object-cover rounded-lg"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -91,7 +91,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
         )}
       </div>
     )}
-    
+
     <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
       <div>
         <div className="text-gray-500 text-xs">Type</div>
@@ -110,7 +110,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
     <div className="grid grid-cols-2 gap-2 mb-3">
       <div>
         <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
-        <input 
+        <input
           type="number"
           min="0"
           value={incident.noPoliceSupport}
@@ -123,7 +123,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
       </div>
       <div>
         <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
-        <input 
+        <input
           type="number"
           min="0"
           value={incident.noFirefighterSupport}
@@ -135,14 +135,14 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
         />
       </div>
     </div>
-    
+
     <div>
       <div className="text-gray-500 text-xs">Summary</div>
       <p className="text-sm">
         {incident.summary}
       </p>
     </div>
-    
+
     <div className="mt-2 text-right">
       <button className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs">
         Play
@@ -171,14 +171,14 @@ function MapController() {
       if (incident) {
         // Center map on the incident
         map.setView(incident.coordinates, 15);
-        
+
         // Open the popup for this incident marker
         const marker = markerRefs.current[selectedIncidentId]; // Assuming incident IDs are stored directly
         if (marker) {
           marker.openPopup();
         }
       }
-    } 
+    }
     // Clear map focus if no incident is selected (optional, prevents staying focused after deselection)
     // else {
     //   // Potentially zoom out or reset view if needed when nothing is selected
@@ -200,7 +200,7 @@ function MapController() {
           marker.openPopup();
         }
       }
-    } 
+    }
     // Clear map focus if no force is selected (optional)
     // else {
     //   // Potentially adjust view when no force is selected
@@ -217,11 +217,11 @@ function AddIncidentMapEvents() {
   const cancelAddingIncident = useIncidentStore((state) => state.cancelAddingIncident);
   const extractedCoordinates = useIncidentStore((state) => state.extractedCoordinates);
   const [newIncidentPosition, setNewIncidentPosition] = useState<[number, number] | null>(null);
-  
+
   // Add console log to debug
   useEffect(() => {
     console.log('🔍 isAddingIncident state changed:', isAddingIncident);
-    
+
     // Change cursor style when in adding incident mode
     if (isAddingIncident) {
       map.getContainer().style.cursor = 'crosshair';
@@ -241,7 +241,7 @@ function AddIncidentMapEvents() {
       map.setView([lat, lng], 15);
     }
   }, [extractedCoordinates, isAddingIncident, map]);
-  
+
   // Event handler for map clicks
   useMapEvents({
     click: (e) => {
@@ -252,7 +252,7 @@ function AddIncidentMapEvents() {
       }
     },
   });
-  
+
   // Render the new incident marker if position is set
   if (newIncidentPosition && isAddingIncident) {
     return (
@@ -281,7 +281,7 @@ function AddIncidentMapEvents() {
       </AnimatedMarker>
     );
   }
-  
+
   return null;
 }
 
@@ -294,23 +294,87 @@ interface AddIncidentFormProps {
 function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
   const addIncident = useIncidentStore((state) => state.addIncident);
   const extractedLocation = useIncidentStore((state) => state.extractedLocation);
-  const [type, setType] = useState<IncidentType>('fire');
-  const [summary, setSummary] = useState('');
-  const [status, setStatus] = useState<IncidentStatus>('critical');
+  const reportData = useIncidentStore((state) => state.reportData);
+
+  // Use report data for initial form values if available, otherwise use defaults
+  const [type, setType] = useState<IncidentType>(
+    reportData?.type as IncidentType || 'fire'
+  );
+  const [summary, setSummary] = useState(reportData?.summary || '');
+
+  // Map status from the report (with first letter lowercase) or use default
+  const getInitialStatus = (): IncidentStatus => {
+    if (!reportData?.status) return 'critical';
+
+    const statusMap: Record<string, IncidentStatus> = {
+      'Critical': 'critical',
+      'Moderate': 'moderate'
+    };
+
+    return statusMap[reportData.status] || 'critical';
+  };
+
+  const [status, setStatus] = useState<IncidentStatus>(getInitialStatus());
+
+  // Use location from the extracted location or the report
   const [location, setLocation] = useState(extractedLocation || '');
-  const [noPoliceSupport, setNoPoliceSupport] = useState(0);
-  const [noFirefighterSupport, setNoFirefighterSupport] = useState(0);
-  
-  // Update location if extractedLocation changes
+
+  // Use support numbers from the report or default to 0
+  const [noPoliceSupport, setNoPoliceSupport] = useState(
+    reportData?.noPoliceSupport || 0
+  );
+  const [noFirefighterSupport, setNoFirefighterSupport] = useState(
+    reportData?.noFirefighterSupport || 0
+  );
+
+  // Update form when extractedLocation or reportData changes
   useEffect(() => {
     if (extractedLocation) {
       setLocation(extractedLocation);
     }
   }, [extractedLocation]);
-  
+
+  // Update form when reportData changes
+  useEffect(() => {
+    if (reportData) {
+      // Update type if valid
+      if (reportData.type) {
+        setType(reportData.type as IncidentType);
+      }
+
+      // Update summary
+      if (reportData.summary) {
+        setSummary(reportData.summary);
+      }
+
+      // Update status (with mapping)
+      if (reportData.status) {
+        const statusMap: Record<string, IncidentStatus> = {
+          'Critical': 'critical',
+          'Moderate': 'moderate'
+        };
+        setStatus(statusMap[reportData.status] || 'critical');
+      }
+
+      // Update location if not already set by extractedLocation
+      if (reportData.location_description && !extractedLocation) {
+        setLocation(reportData.location_description);
+      }
+
+      // Update support numbers
+      if (typeof reportData.noPoliceSupport === 'number') {
+        setNoPoliceSupport(reportData.noPoliceSupport);
+      }
+
+      if (typeof reportData.noFirefighterSupport === 'number') {
+        setNoFirefighterSupport(reportData.noFirefighterSupport);
+      }
+    }
+  }, [reportData, extractedLocation]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     addIncident({
       type,
       summary,
@@ -321,14 +385,14 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
       noFirefighterSupport
     });
   };
-  
+
   return (
     <form onSubmit={handleSubmit} className="w-full">
       <h3 className="font-medium text-lg mb-2">Add New Incident</h3>
-      
+
       <div className="mb-2">
         <label className="block text-gray-700 text-xs mb-1">Type</label>
-        <select 
+        <select
           value={type}
           onChange={(e) => setType(e.target.value as IncidentType)}
           className="w-full px-2 py-1 border rounded text-sm"
@@ -345,20 +409,20 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
           <option value="power_outage">Power Outage</option>
         </select>
       </div>
-      
+
       <div className="mb-2">
         <label className="block text-gray-700 text-xs mb-1">Summary</label>
-        <input 
+        <input
           type="text"
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           className="w-full px-2 py-1 border rounded text-sm"
         />
       </div>
-      
+
       <div className="mb-2">
         <label className="block text-gray-700 text-xs mb-1">Status</label>
-        <select 
+        <select
           value={status}
           onChange={(e) => setStatus(e.target.value as IncidentStatus)}
           className="w-full px-2 py-1 border rounded text-sm"
@@ -369,10 +433,10 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
           <option value="resolved">Resolved</option>
         </select>
       </div>
-      
+
       <div className="mb-3">
         <label className="block text-gray-700 text-xs mb-1">Location</label>
-        <input 
+        <input
           type="text"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
@@ -384,7 +448,7 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div>
           <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
-          <input 
+          <input
             type="number"
             min="0"
             value={noPoliceSupport}
@@ -394,7 +458,7 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
         </div>
         <div>
           <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
-          <input 
+          <input
             type="number"
             min="0"
             value={noFirefighterSupport}
@@ -403,7 +467,7 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
           />
         </div>
       </div>
-      
+
       <div className="flex justify-between">
         <button
           type="button"
@@ -448,7 +512,7 @@ const ForcePopupContent: React.FC<ForcePopupContentProps> = ({ force }) => (
         {force.status === 'idle' ? 'IDLE' : 'ON ROAD'}
       </span>
     </div>
-    
+
     <div className="grid grid-cols-2 gap-2 text-sm">
       <div>
         <div className="text-gray-500 text-xs">Callsign</div>
@@ -480,10 +544,10 @@ function LeafletAnimationStyles() {
                    top 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
       }
     `;
-    
+
     // Add to document head
     document.head.appendChild(styleEl);
-    
+
     // Clean up on unmount
     return () => {
       const existingStyle = document.getElementById('leaflet-marker-animations');
@@ -492,20 +556,20 @@ function LeafletAnimationStyles() {
       }
     };
   }, []);
-  
+
   return null;
 }
 
 // MapContent component renders map elements only when the map is initialized
-function MapContent({ 
-  incidents, 
+function MapContent({
+  incidents,
   forces,
   handleMarkerClick,
   handleForceClick,
-  photoUrls, 
-  streetViewUrls, 
-  selectedIncident, 
-  isLoading, 
+  photoUrls,
+  streetViewUrls,
+  selectedIncident,
+  isLoading,
   markerRefs,
   forceHistory,
   showMotionTrails,
@@ -528,7 +592,7 @@ function MapContent({
 }) {
   const map = useMap();
   const [isMapReady, setIsMapReady] = useState(false);
-  
+
   // Set map as ready after it's properly initialized
   useEffect(() => {
     if (map) {
@@ -537,12 +601,12 @@ function MapContent({
       setTimeout(() => {
         map.invalidateSize();
       }, 100);
-      
+
       // Trigger additional resize
       window.dispatchEvent(new Event('resize'));
     }
   }, [map]);
-  
+
   // Effect to invalidate map size on sidebar resize
   useEffect(() => {
     const handleResize = () => {
@@ -562,9 +626,9 @@ function MapContent({
       window.removeEventListener('sidebarResized', handleResize);
     };
   }, [map]); // Dependency on map ensures it's added only when map is available
-  
+
   if (!isMapReady) return null;
-  
+
   return (
     <>
       <TileLayer
@@ -573,7 +637,7 @@ function MapContent({
       />
       <MapController />
       <AddIncidentMapEvents />
-      
+
       {/* Display incidents */}
       {incidents.map((incident) => (
         <AnimatedMarker
@@ -591,16 +655,16 @@ function MapContent({
           }}
         >
           <Popup className="rounded-lg shadow-lg border border-gray-200" minWidth={320} maxWidth={400}>
-            <PopupContent 
-              incident={incident} 
-              photoUrl={photoUrls[incident.id]} 
+            <PopupContent
+              incident={incident}
+              photoUrl={photoUrls[incident.id]}
               streetViewUrl={streetViewUrls[incident.id]}
               isLoading={isLoading && selectedIncident?.id === incident.id}
             />
           </Popup>
         </AnimatedMarker>
       ))}
-      
+
       {/* Display motion trails when enabled */}
       {showMotionTrails && Object.entries(forceHistory).map(([forceId, positions]) => (
         positions.length > 1 && (
@@ -614,7 +678,7 @@ function MapContent({
           />
         )
       ))}
-      
+
       {/* Display forces */}
       {forces.map((force) => (
         <AnimatedMarker
@@ -652,31 +716,31 @@ export default function Map({ position }: MapProps) {
   const selectIncident = useIncidentStore((state) => state.selectIncident);
   const isAddingIncident = useIncidentStore((state) => state.isAddingIncident);
   const cancelAddingIncident = useIncidentStore((state) => state.cancelAddingIncident);
-  
+
   const forces = useForceStore((state) => state.forces);
   const selectForce = useForceStore((state) => state.selectForce);
   const selectedForceId = useForceStore((state) => state.selectedForceId);
   const updateForceCoordinates = useForceStore((state) => state.updateForceCoordinates);
-  
+
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
   const [streetViewUrls, setStreetViewUrls] = useState<Record<string, string | null>>({});
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const markerRefs = useRef<Record<string, L.Marker>>({});
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  
+
   const [searchText, setSearchText] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<IncidentType[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<IncidentStatus[]>([]);
-  
+
   const [forceSearchText, setForceSearchText] = useState('');
   const [selectedForceTypes, setSelectedForceTypes] = useState<ForceType[]>([]);
   const [selectedForceStatuses, setSelectedForceStatuses] = useState<ForceStatus[]>([]);
-  
+
   // Always enable movement and motion trails (removed toggles)
   const isMovementEnabled = true;
   const showMotionTrails = true;
-  
+
   // Store force movement directions and history
   const [forceDirections, setForceDirections] = useState<Record<string, { lat: number, lng: number }>>({});
   const [forceHistory, setForceHistory] = useState<Record<string, Array<[number, number]>>>({});
@@ -685,48 +749,48 @@ export default function Map({ position }: MapProps) {
   useEffect(() => {
     // Skip movement if disabled
     if (!isMovementEnabled) return;
-    
+
     // Initialize force directions if not set
     if (Object.keys(forceDirections).length === 0) {
       const initialDirections: Record<string, { lat: number, lng: number }> = {};
       const initialHistory: Record<string, Array<[number, number]>> = {};
-      
+
       forces.forEach(force => {
         if (force.status === 'on_road') {
           // Random direction vector with normalized magnitude - 50% faster
           const angle = Math.random() * Math.PI * 2;
-          initialDirections[force.id] = { 
+          initialDirections[force.id] = {
             lat: Math.sin(angle) * 0.00045, // 50% faster (0.0003 * 1.5)
-            lng: Math.cos(angle) * 0.00045 
+            lng: Math.cos(angle) * 0.00045
           };
-          
+
           // Initialize history with current position
           initialHistory[force.id] = [force.coordinates];
         }
       });
-      
+
       setForceDirections(initialDirections);
       setForceHistory(initialHistory);
     }
-    
+
     const moveForces = () => {
       const updatedDirections = { ...forceDirections };
       const updatedHistory = { ...forceHistory };
-      
+
       forces.forEach(force => {
         // Only move forces that are on_road
         if (force.status === 'on_road') {
           // Get current direction or generate a new one
           let direction = updatedDirections[force.id];
-          
+
           if (!direction) {
             const angle = Math.random() * Math.PI * 2;
-            direction = { 
+            direction = {
               lat: Math.sin(angle) * 0.00045,
               lng: Math.cos(angle) * 0.00045
             };
           }
-          
+
           // Randomly adjust direction slightly (5% chance to change direction)
           if (Math.random() < 0.05) {
             const angle = Math.random() * Math.PI * 2;
@@ -734,43 +798,43 @@ export default function Map({ position }: MapProps) {
               lat: Math.sin(angle) * 0.00045,
               lng: Math.cos(angle) * 0.00045
             };
-            
+
             // Smooth transition to new direction (blend old and new)
             direction = {
               lat: direction.lat * 0.7 + newDirection.lat * 0.3,
               lng: direction.lng * 0.7 + newDirection.lng * 0.3
             };
           }
-          
+
           // Calculate new coordinates
           const newLat = force.coordinates[0] + direction.lat;
           const newLng = force.coordinates[1] + direction.lng;
-          
+
           // Update force coordinates
           updateForceCoordinates(force.id, [newLat, newLng]);
-          
+
           // Save updated direction
           updatedDirections[force.id] = direction;
-          
+
           // Update position history (keep last 5 positions)
           if (!updatedHistory[force.id]) {
             updatedHistory[force.id] = [];
           }
-          
+
           updatedHistory[force.id] = [
             [newLat, newLng],
             ...updatedHistory[force.id].slice(0, 4)
           ];
         }
       });
-      
+
       setForceDirections(updatedDirections);
       setForceHistory(updatedHistory);
     };
-    
+
     // Update less frequently since we have CSS transitions to handle the animation
     const intervalId = setInterval(moveForces, 1500);
-    
+
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, [forces, updateForceCoordinates, isMovementEnabled, forceDirections, forceHistory]);
@@ -782,7 +846,7 @@ export default function Map({ position }: MapProps) {
         selectedTypes: IncidentType[];
         selectedStatuses: IncidentStatus[];
       }>;
-      
+
       if (customEvent.detail) {
         const { searchText, selectedTypes, selectedStatuses } = customEvent.detail;
         setSearchText(searchText || '');
@@ -797,7 +861,7 @@ export default function Map({ position }: MapProps) {
       window.removeEventListener('filtersChanged', handleFiltersChange);
     };
   }, []);
-  
+
   useEffect(() => {
     const handleForceFiltersChange = (event: Event) => {
       const customEvent = event as CustomEvent<{
@@ -805,7 +869,7 @@ export default function Map({ position }: MapProps) {
         selectedTypes: ForceType[];
         selectedStatuses: ForceStatus[];
       }>;
-      
+
       if (customEvent.detail) {
         const { searchText, selectedTypes, selectedStatuses } = customEvent.detail;
         setForceSearchText(searchText || '');
@@ -823,45 +887,45 @@ export default function Map({ position }: MapProps) {
 
   const filteredIncidents = useMemo(() => {
     let filtered = incidents;
-    
+
     if (searchText.trim()) {
       const searchLower = searchText.toLowerCase().trim();
-      filtered = filtered.filter(incident => 
-        incident.summary.toLowerCase().includes(searchLower) || 
+      filtered = filtered.filter(incident =>
+        incident.summary.toLowerCase().includes(searchLower) ||
         incident.location.toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (selectedTypes.length > 0) {
       filtered = filtered.filter(incident => selectedTypes.includes(incident.type));
     }
-    
+
     if (selectedStatuses.length > 0) {
       filtered = filtered.filter(incident => selectedStatuses.includes(incident.status));
     }
-    
+
     return filtered;
   }, [incidents, searchText, selectedTypes, selectedStatuses]);
-  
+
   const filteredForces = useMemo(() => {
     let filtered = forces;
-    
+
     if (forceSearchText.trim()) {
       const searchLower = forceSearchText.toLowerCase().trim();
-      filtered = filtered.filter(force => 
-        force.callsign.toLowerCase().includes(searchLower) || 
+      filtered = filtered.filter(force =>
+        force.callsign.toLowerCase().includes(searchLower) ||
         force.location.toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (selectedForceTypes.length > 0) {
       filtered = filtered.filter(force => selectedForceTypes.includes(force.type));
     }
-    
+
     if (selectedForceStatuses.length > 0) {
       filtered = filtered.filter(force => selectedForceStatuses.includes(force.status));
     }
-    
+
     return filtered;
   }, [forces, forceSearchText, selectedForceTypes, selectedForceStatuses]);
 
@@ -883,7 +947,7 @@ export default function Map({ position }: MapProps) {
         getNearestPhotoUrl(incident.coordinates[0], incident.coordinates[1]),
         getStreetViewUrl(incident.coordinates[0], incident.coordinates[1])
       ]);
-      
+
       console.log('📸 Photo URLs received:', {
         mapbox: photoUrl ? '✅ Success' : '❌ No URL',
         streetView: streetViewUrl ? '✅ Success' : '❌ No URL'
@@ -895,14 +959,14 @@ export default function Map({ position }: MapProps) {
           [incident.id]: photoUrl
         }));
       }
-      
+
       if (streetViewUrl) {
         setStreetViewUrls(prev => ({
           ...prev,
           [incident.id]: streetViewUrl
         }));
       }
-      
+
       console.log('💾 Stored photo URLs for incident:', incident.id);
     } catch (error) {
       console.error('💥 Error in handleMarkerClick:', {
@@ -925,7 +989,7 @@ export default function Map({ position }: MapProps) {
       {isAddingIncident && (
         <div className="absolute top-0 left-0 right-0 bg-blue-600 text-white py-2 px-4 text-center z-[9999]">
           Click on the map to place the new incident
-          <button 
+          <button
             className="ml-2 bg-blue-700 px-2 py-1 rounded"
             onClick={cancelAddingIncident}
           >
@@ -933,13 +997,13 @@ export default function Map({ position }: MapProps) {
           </button>
         </div>
       )}
-      
+
       <div className="absolute top-3 right-3 space-y-2 z-50">
         {(selectedTypes.length > 0 || selectedStatuses.length > 0) && (
           <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
             <span className="font-medium text-gray-700">Filtered incidents: </span>
             <span className="ml-1 text-red-600 font-medium">{filteredIncidents.length}</span>
-            <button 
+            <button
               className="ml-2 text-gray-500 hover:text-gray-700"
               onClick={() => {
                 window.dispatchEvent(new CustomEvent('resetFilters'));
@@ -950,12 +1014,12 @@ export default function Map({ position }: MapProps) {
             </button>
           </div>
         )}
-        
+
         {(selectedForceTypes.length > 0 || selectedForceStatuses.length > 0) && (
           <div className="bg-white py-1 px-3 rounded-full border shadow-sm text-sm flex items-center">
             <span className="font-medium text-gray-700">Filtered units: </span>
             <span className="ml-1 text-blue-600 font-medium">{filteredForces.length}</span>
-            <button 
+            <button
               className="ml-2 text-gray-500 hover:text-gray-700"
               onClick={() => {
                 window.dispatchEvent(new CustomEvent('resetForceFilters'));
@@ -967,17 +1031,17 @@ export default function Map({ position }: MapProps) {
           </div>
         )}
       </div>
-      
+
       <MarkerContext.Provider value={markerRefs}>
-        <MapContainer 
-          center={position} 
-          zoom={14} 
+        <MapContainer
+          center={position}
+          zoom={14}
           scrollWheelZoom={true}
           style={{ height: '100%', width: '100%' }}
           className="h-full w-full z-0"
         >
           <LeafletAnimationStyles />
-          <MapContent 
+          <MapContent
             incidents={filteredIncidents}
             forces={filteredForces}
             handleMarkerClick={handleMarkerClick}

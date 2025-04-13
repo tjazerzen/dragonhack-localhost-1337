@@ -2,18 +2,30 @@ import { create } from 'zustand';
 import { Incident } from '@/types/incidents';
 import type { GeocodingResult } from '@/lib/geocoding';
 
+// New interface for report data
+interface ReportData {
+  type: string;
+  summary: string;
+  status: string;
+  location_description: string;
+  noPoliceSupport: number;
+  noFirefighterSupport: number;
+}
+
 interface IncidentStore {
   incidents: Incident[];
   selectedIncidentId: string | null;
   isAddingIncident: boolean;
   extractedLocation: string | null;
   extractedCoordinates: GeocodingResult | null;
+  reportData: ReportData | null;
   selectIncident: (id: string | null) => void;
   startAddingIncident: () => void;
   cancelAddingIncident: () => void;
   addIncident: (incident: Omit<Incident, 'id' | 'timestamp'> & { coordinates: [number, number] }) => void;
   setExtractedLocation: (location: string | null) => void;
   setExtractedCoordinates: (coordinates: GeocodingResult | null) => void;
+  setReportData: (data: ReportData | null) => void;
 }
 
 // Sample incident data
@@ -301,24 +313,27 @@ export const useIncidentStore = create<IncidentStore>()((set, get) => ({
   isAddingIncident: false,
   extractedLocation: null,
   extractedCoordinates: null,
+  reportData: null,
   selectIncident: (id) => set({ selectedIncidentId: id }),
   startAddingIncident: () => set({ isAddingIncident: true }),
-  cancelAddingIncident: () => set({ 
+  cancelAddingIncident: () => set({
     isAddingIncident: false,
     extractedCoordinates: null,
-    extractedLocation: null
+    extractedLocation: null,
+    reportData: null
   }),
   setExtractedLocation: (location) => set({ extractedLocation: location }),
   setExtractedCoordinates: (coordinates) => {
     if (coordinates) {
-      set({ 
+      set({
         extractedCoordinates: coordinates,
-        isAddingIncident: true 
+        isAddingIncident: true
       });
     } else {
       set({ extractedCoordinates: coordinates });
     }
   },
+  setReportData: (data) => set({ reportData: data }),
   addIncident: (incidentData) => {
     const { incidents } = get();
 
@@ -348,7 +363,8 @@ export const useIncidentStore = create<IncidentStore>()((set, get) => ({
       incidents: [...incidents, newIncident],
       isAddingIncident: false,
       extractedCoordinates: null,
-      extractedLocation: null
+      extractedLocation: null,
+      reportData: null
     });
   }
 })); 
