@@ -2,6 +2,8 @@
 
 A Next.js application for real-time emergency incident reporting, analysis, and response coordination. This system processes emergency call transcripts using AI to extract critical information about incidents and visualize them on an interactive map.
 
+![nineline](public/nineline.png)
+
 ## Features
 
 - **Transcript Analysis**: Processes emergency call transcripts using Google's Gemini AI to extract key incident details
@@ -15,6 +17,7 @@ A Next.js application for real-time emergency incident reporting, analysis, and 
 First, run the development server:
 
 ```bash
+yarn install
 yarn dev
 ```
 
