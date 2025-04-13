@@ -125,7 +125,7 @@ export default function RecButton() {
         appendToMessage(currentMessageId, text);
       }
     } 
-  }, [text, addMessage, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession]);
+  }, [text, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession]);
 
   return (
     <Button 
