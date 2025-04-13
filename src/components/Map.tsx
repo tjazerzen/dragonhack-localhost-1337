@@ -738,7 +738,8 @@ export default function Map({ position }: MapProps) {
     if (!isMovementEnabled) return;
 
     // Define movement step size and stopping threshold
-    const stepSize = 0.00045; // Controls speed
+    const baseStepSize = 0.00045; // Base speed for non-dispatched units
+    const dispatchedStepSize = baseStepSize * 2; // Double speed for dispatched units
     const stopThreshold = 0.0001; // Distance threshold to consider unit arrived
 
     // Initialize directions only for initially 'on_road' non-dispatched units
@@ -750,8 +751,8 @@ export default function Map({ position }: MapProps) {
         if (force.status === 'on_road' && !force.dispatchedToIncidentId) { 
           const angle = Math.random() * Math.PI * 2;
           initialDirections[force.id] = {
-            lat: Math.sin(angle) * stepSize,
-            lng: Math.cos(angle) * stepSize
+            lat: Math.sin(angle) * baseStepSize,
+            lng: Math.cos(angle) * baseStepSize
           };
         }
         initialHistory[force.id] = [force.coordinates];
@@ -785,7 +786,7 @@ export default function Map({ position }: MapProps) {
 
             if (distance > stopThreshold) {
               // Calculate movement step, ensuring it doesn't overshoot
-              const moveDistance = Math.min(stepSize, distance);
+              const moveDistance = Math.min(dispatchedStepSize, distance); // Use dispatched speed
               const moveLat = (diffLat / distance) * moveDistance;
               const moveLng = (diffLng / distance) * moveDistance;
 
@@ -818,13 +819,13 @@ export default function Map({ position }: MapProps) {
           let direction = updatedDirections[force.id];
           if (!direction) { // Initialize direction if missing
             const angle = Math.random() * Math.PI * 2;
-            direction = { lat: Math.sin(angle) * stepSize, lng: Math.cos(angle) * stepSize };
+            direction = { lat: Math.sin(angle) * baseStepSize, lng: Math.cos(angle) * baseStepSize }; // Use base speed
           }
 
           // Randomly adjust direction occasionally
           if (Math.random() < 0.05) { 
             const angle = Math.random() * Math.PI * 2;
-            const newDirection = { lat: Math.sin(angle) * stepSize, lng: Math.cos(angle) * stepSize };
+            const newDirection = { lat: Math.sin(angle) * baseStepSize, lng: Math.cos(angle) * baseStepSize }; // Use base speed
             // Blend for smoother transition
             direction = { lat: direction.lat * 0.7 + newDirection.lat * 0.3, lng: direction.lng * 0.7 + newDirection.lng * 0.3 };
           }
