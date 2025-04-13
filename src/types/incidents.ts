@@ -10,4 +10,6 @@ export interface Incident {
   location: string;
   timestamp: string;
   coordinates: [number, number]; // [latitude, longitude]
+  noPoliceSupport: number;
+  noFirefighterSupport: number;
 } 

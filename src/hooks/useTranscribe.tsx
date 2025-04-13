@@ -34,8 +34,39 @@ export default function useTranscribe() {
 
     recordTranscribe.current.start({
       model: 'stt-rt-preview',
-      languageHints: ['en'],
+      languageHints: ['en', 'sl'],
       enableSpeakerTags: true,
+      context: `
+        ## Instructions
+
+        You will transcribe a conversation between a caller in distress and an emergency operator. 
+        The caller will be speaking in English. The operator will be speaking in English. 
+        The locations the caller will mention will be in Slovenia.
+
+        ## Cities 
+        
+        Following cities will possibly be mentioned:
+        Ljubljana.
+        Maribor.
+        Celje.
+        Kranj.
+
+        ## Important words to keep in context
+
+        You should always adhere and try to match the following words:
+        - ulica
+        - požar
+        - Slovenija
+        - slovenska
+        - avtocesta
+        - Čopova
+
+        ## Important roads
+
+        - Slovenska cesta
+        - Trubarjeva cesta
+        - Copova cesta
+      `,
       onFinished: () => {
         console.log('transcription finished');
       },

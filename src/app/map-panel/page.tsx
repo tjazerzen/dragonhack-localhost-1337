@@ -19,7 +19,7 @@ const Map = dynamic(() => import('@/components/Map'), {
 export default function MapPanel() {
   const isIncidentPanelCollapsed = useLayoutStore((state) => state.isIncidentPanelCollapsed);
   const activeSidePanel = useLayoutStore((state) => state.activeSidePanel);
-  const position: LatLngExpression = [46.052091, 14.468414];
+  const position: LatLngExpression = [46.061583, 14.507542];
   const [sidebarWidth, setSidebarWidth] = useState(400);
   const [chatSidebarWidth, setChatSidebarWidth] = useState(400);
 
