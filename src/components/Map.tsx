@@ -74,7 +74,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
           </span>
         </div>
       </div>
-      
+
       {isLoading ? (
         <div className="h-48 flex items-center justify-center bg-gray-100 rounded-lg">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600"></div>
@@ -84,9 +84,9 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
           {photoUrl && (
             <div>
               <div className="text-gray-500 text-xs mb-1">Map View</div>
-              <img 
-                src={photoUrl} 
-                alt="Location map" 
+              <img
+                src={photoUrl}
+                alt="Location map"
                 className="w-full h-40 object-cover rounded-lg"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -95,13 +95,13 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
               />
             </div>
           )}
-          
+
           {streetViewUrl && (
             <div>
               <div className="text-gray-500 text-xs mb-1">Street View</div>
-              <img 
-                src={streetViewUrl} 
-                alt="Street view" 
+              <img
+                src={streetViewUrl}
+                alt="Street view"
                 className="w-full h-40 object-cover rounded-lg"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -112,7 +112,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
           )}
         </div>
       )}
-      
+
       <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
         <div>
           <div className="text-gray-500 text-xs">Type</div>
@@ -131,7 +131,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div>
           <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
-          <input 
+          <input
             type="number"
             min="0"
             value={policeSupportNeeded}
@@ -144,7 +144,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
         </div>
         <div>
           <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
-          <input 
+          <input
             type="number"
             min="0"
             value={firefighterSupportNeeded}
@@ -156,18 +156,23 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
           />
         </div>
       </div>
-      
+
       <div>
         <div className="text-gray-500 text-xs">Summary</div>
         <p className="text-sm">
           {incident.summary}
         </p>
       </div>
-      
+
       <div className="mt-2 text-right">
-        <button 
-          className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs"
-          onClick={() => onDispatch(incident.id, policeSupportNeeded, firefighterSupportNeeded)}
+        <button
+          className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+          onClick={() => {
+            onDispatch(incident.id, policeSupportNeeded, firefighterSupportNeeded);
+            // Close the popup after dispatching
+            const marker = document.querySelector('.leaflet-popup-close-button') as HTMLElement;
+            if (marker) marker.click();
+          }}
         >
           Dispatch
         </button>
@@ -551,10 +556,10 @@ const ForcePopupContent: React.FC<ForcePopupContentProps> = ({ force }) => (
       </div>
     </div>
     {force.dispatchedToIncidentId && (
-       <div className="mt-1">
-         <div className="text-gray-500 text-xs">Dispatched To Incident ID</div>
-         <div>{force.dispatchedToIncidentId}</div>
-       </div>
+      <div className="mt-1">
+        <div className="text-gray-500 text-xs">Dispatched To Incident ID</div>
+        <div>{force.dispatchedToIncidentId}</div>
+      </div>
     )}
   </div>
 );
@@ -604,10 +609,10 @@ function MapContent({
   handleMarkerClick,
   handleForceClick,
   handleDispatchUnits,
-  photoUrls, 
-  streetViewUrls, 
-  selectedIncident, 
-  isLoading, 
+  photoUrls,
+  streetViewUrls,
+  selectedIncident,
+  isLoading,
   markerRefs,
   forceHistory,
   showMotionTrails,
@@ -725,10 +730,10 @@ function MapContent({
         const iconSize: [number, number] = isDispatched ? [45, 45] : [33, 33];
         const iconAnchor: [number, number] = isDispatched ? [15, 15] : [11, 11];
         const popupAnchor: [number, number] = isDispatched ? [0, -15] : [0, -11];
-        
+
         // Determine the icon based on dispatch status first
-        const iconUrl = isDispatched 
-          ? forceIcons[force.type]['dispatched'] 
+        const iconUrl = isDispatched
+          ? forceIcons[force.type]['dispatched']
           : forceIcons[force.type][force.status];
 
         return (
@@ -772,7 +777,10 @@ export default function Map({ position }: MapProps) {
   const selectedForceId = useForceStore((state) => state.selectedForceId);
   const updateForceCoordinates = useForceStore((state) => state.updateForceCoordinates);
   const dispatchForce = useForceStore((state) => state.dispatchForce);
-  
+  const setRoute = useForceStore((state) => state.setRoute);
+  const clearRoute = useForceStore((state) => state.clearRoute);
+  const updateRouteTargetIndex = useForceStore((state) => state.updateRouteTargetIndex);
+
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
   const [streetViewUrls, setStreetViewUrls] = useState<Record<string, string | null>>({});
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -796,162 +804,199 @@ export default function Map({ position }: MapProps) {
   const [forceDirections, setForceDirections] = useState<Record<string, { lat: number, lng: number }>>({});
   const [forceHistory, setForceHistory] = useState<Record<string, Array<[number, number]>>>({});
 
+  // Helper function to calculate distance (spherical law of cosines for more accuracy)
+  function calculateDistance(coord1: [number, number], coord2: [number, number]): number {
+    const [lat1, lon1] = coord1;
+    const [lat2, lon2] = coord2;
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI / 180; // φ, λ in radians
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // in metres
+  }
+
   // Add more realistic movement to force units
   useEffect(() => {
-    // Skip movement if disabled
     if (!isMovementEnabled) return;
 
-    // Define movement step size and stopping threshold
-    const baseStepSize = 0.00045; // Base speed for non-dispatched units
-    const dispatchedStepSize = baseStepSize * 2; // Double speed for dispatched units
-    const stopThreshold = 0.0001; // Distance threshold to consider unit arrived
+    // Use realistic speeds (e.g., m/s) and adjust based on interval time
+    const intervalSeconds = 1.5; // Matches the setInterval time (1500 ms)
+    const baseSpeedMps = 15; // ~54 km/h or 34 mph (adjust as needed)
+    const dispatchedSpeedMps = 25; // ~90 km/h or 56 mph
 
-    // Initialize directions only for initially 'on_road' non-dispatched units
-    if (Object.keys(forceDirections).length === 0) {
-      const initialDirections: Record<string, { lat: number, lng: number }> = {};
-      const initialHistory: Record<string, Array<[number, number]>> = {};
-
-      forces.forEach(force => {
-        if (force.status === 'on_road' && !force.dispatchedToIncidentId) { 
-          const angle = Math.random() * Math.PI * 2;
-          initialDirections[force.id] = {
-            lat: Math.sin(angle) * baseStepSize,
-            lng: Math.cos(angle) * baseStepSize
-          };
-
-          // Initialize history with current position
-          initialHistory[force.id] = [force.coordinates];
-        }
-        initialHistory[force.id] = [force.coordinates];
-      });
-
-
-      setForceDirections(initialDirections);
-      setForceHistory(initialHistory);
-    }
-
+    const baseStepDistance = baseSpeedMps * intervalSeconds; // meters to move per interval
+    const dispatchedStepDistance = dispatchedSpeedMps * intervalSeconds;
+    const arrivalThresholdMeters = 20; // Distance threshold to consider unit arrived at a route point or final dest
 
     const moveForces = () => {
       const updatedDirections = { ...forceDirections };
       const updatedHistory = { ...forceHistory };
-      let forcesCoordinatesUpdated = false; // Flag to optimize state updates
+      let forcesCoordinatesUpdated = false;
 
       forces.forEach(force => {
         let newLat = force.coordinates[0];
         let newLng = force.coordinates[1];
         let moved = false;
 
-        if (force.dispatchedToIncidentId) {
-          // --- Dispatched Unit Logic ---
-          const targetIncident = incidents.find(inc => inc.id === force.dispatchedToIncidentId);
+        // --- Dispatched Unit Logic (Following Route) ---
+        if (force.dispatchedToIncidentId && force.route && typeof force.routeTargetIndex === 'number') {
+          const route = force.route;
+          let targetIndex = force.routeTargetIndex;
 
-          if (targetIncident) {
-            const targetCoords = targetIncident.coordinates;
-            const currentCoords = force.coordinates;
+          // Ensure target index is valid
+          if (targetIndex >= route.length) {
+            console.warn(`Force ${force.id} has invalid routeTargetIndex ${targetIndex}. Resetting route.`);
+            clearRoute(force.id);
+            return; // Skip movement for this iteration
+          }
 
-            const diffLat = targetCoords[0] - currentCoords[0];
-            const diffLng = targetCoords[1] - currentCoords[1];
-            const distance = Math.sqrt(diffLat * diffLat + diffLng * diffLng);
+          const targetCoords = route[targetIndex];
+          const currentCoords: [number, number] = [newLat, newLng];
+          const distanceToTargetPoint = calculateDistance(currentCoords, targetCoords);
 
-            if (distance > stopThreshold) {
-              // Calculate movement step, ensuring it doesn't overshoot
-              const moveDistance = Math.min(dispatchedStepSize, distance); // Use dispatched speed
-              const moveLat = (diffLat / distance) * moveDistance;
-              const moveLng = (diffLng / distance) * moveDistance;
+          if (distanceToTargetPoint < arrivalThresholdMeters) {
+            // Arrived at the current target point in the route
+            newLat = targetCoords[0]; // Snap to the point
+            newLng = targetCoords[1];
+            targetIndex++; // Move to the next point
+            moved = true;
 
-              newLat = currentCoords[0] + moveLat;
-              newLng = currentCoords[1] + moveLng;
-              moved = true;
+            if (targetIndex >= route.length) {
+              // Reached the final destination of the route
+              console.log(`Force ${force.id} arrived at destination (end of route).`);
+              clearRoute(force.id); // Clear route, set status to idle
             } else {
-              // Arrived at destination or very close
-              if (currentCoords[0] !== targetCoords[0] || currentCoords[1] !== targetCoords[1]) {
-                newLat = targetCoords[0]; // Snap to exact target coordinates
-                newLng = targetCoords[1];
-                moved = true;
-                // Consider updating status here, e.g., back to idle or 'at_scene'
-                // updateForceStatus(force.id, 'idle'); 
-                // Or clear dispatch: dispatchForce(force.id, null); // Needs store modification
+              // Update the target index in the store
+              updateRouteTargetIndex(force.id, targetIndex);
+
+              // Recalculate movement towards the *new* target point in the *same tick*
+              // (Optional, but smoother) -> Let's move towards the next point immediately
+              const nextTargetCoords = route[targetIndex];
+              const distanceToNextTarget = calculateDistance([newLat, newLng], nextTargetCoords);
+              const moveDistance = Math.min(dispatchedStepDistance, distanceToNextTarget); // Use dispatched speed
+
+              if (distanceToNextTarget > arrivalThresholdMeters) { // Avoid tiny movements if already close
+                const angle = Math.atan2(nextTargetCoords[1] - newLng, nextTargetCoords[0] - newLat);
+                // Convert distance from meters to degrees (approximation)
+                const metersPerDegreeLat = 111320;
+                const metersPerDegreeLng = 111320 * Math.cos(newLat * Math.PI / 180);
+                const dLat = (moveDistance * Math.cos(angle)) / metersPerDegreeLat;
+                const dLng = (moveDistance * Math.sin(angle)) / metersPerDegreeLng;
+                newLat += dLat;
+                newLng += dLng;
+              } else {
+                // If very close to the next point already, just snap
+                newLat = nextTargetCoords[0];
+                newLng = nextTargetCoords[1];
+                // Could potentially advance targetIndex again here if needed
               }
-              // Unit stops moving as it has reached the target
             }
           } else {
-            console.warn(`Incident ${force.dispatchedToIncidentId} not found for dispatched force ${force.id}. Stopping movement.`);
-            // Unit stops if incident disappears
+            // Move towards the current target point
+            const angle = Math.atan2(targetCoords[1] - currentCoords[1], targetCoords[0] - currentCoords[0]);
+            const moveDistance = Math.min(dispatchedStepDistance, distanceToTargetPoint); // Ensure not overshooting
+
+            // Convert distance from meters to degrees (approximation)
+            const metersPerDegreeLat = 111320; // Approx meters per degree latitude
+            const metersPerDegreeLng = 111320 * Math.cos(currentCoords[0] * Math.PI / 180); // Approx meters per degree longitude at current latitude
+
+            const dLat = (moveDistance * Math.cos(angle)) / metersPerDegreeLat;
+            const dLng = (moveDistance * Math.sin(angle)) / metersPerDegreeLng;
+
+            newLat = currentCoords[0] + dLat;
+            newLng = currentCoords[1] + dLng;
+            moved = true;
           }
           // Remove random direction if one exists for this dispatched unit
           if (updatedDirections[force.id]) {
             delete updatedDirections[force.id];
           }
 
-        } else if (force.status === 'on_road') {
+        } else if (force.status === 'on_road' && !force.dispatchedToIncidentId) {
           // --- Random Movement Logic (Non-Dispatched, On Road) ---
+          // (Use distance calculation and degree conversion for consistency)
           let direction = updatedDirections[force.id];
-          if (!direction) { // Initialize direction if missing
+          if (!direction) {
             const angle = Math.random() * Math.PI * 2;
-            direction = {lat: Math.sin(angle) * baseStepSize, lng: Math.cos(angle) * baseStepSize }; // Use base speed
+            // Calculate dLat/dLng based on baseStepDistance
+            const metersPerDegreeLat = 111320;
+            const metersPerDegreeLng = 111320 * Math.cos(force.coordinates[0] * Math.PI / 180);
+            const dLat = (baseStepDistance * Math.cos(angle)) / metersPerDegreeLat;
+            const dLng = (baseStepDistance * Math.sin(angle)) / metersPerDegreeLng;
+            direction = { lat: dLat, lng: dLng }; // Store degree deltas
           }
 
-          // Randomly adjust direction occasionally
-          if (Math.random() < 0.05) { 
+          if (Math.random() < 0.05) {
             const angle = Math.random() * Math.PI * 2;
-            const newDirection = { lat: Math.sin(angle) * baseStepSize, lng: Math.cos(angle) * baseStepSize }; // Use base speed
-            // Blend for smoother transition
+            const metersPerDegreeLat = 111320;
+            const metersPerDegreeLng = 111320 * Math.cos(force.coordinates[0] * Math.PI / 180);
+            const dLat = (baseStepDistance * Math.cos(angle)) / metersPerDegreeLat;
+            const dLng = (baseStepDistance * Math.sin(angle)) / metersPerDegreeLng;
+            const newDirection = { lat: dLat, lng: dLng };
             direction = { lat: direction.lat * 0.7 + newDirection.lat * 0.3, lng: direction.lng * 0.7 + newDirection.lng * 0.3 };
           }
 
           newLat = force.coordinates[0] + direction.lat;
           newLng = force.coordinates[1] + direction.lng;
-          updatedDirections[force.id] = direction; // Store updated direction
+          updatedDirections[force.id] = direction;
           moved = true;
 
         } else {
           // --- Idle Unit Logic ---
-          // Ensure no random direction is stored for idle units
-           if (updatedDirections[force.id]) {
-             delete updatedDirections[force.id];
-           }
-           // moved remains false
+          if (updatedDirections[force.id]) {
+            delete updatedDirections[force.id];
+          }
         }
 
-        // --- Update State and History ---
+        // --- Update State and History --- (Common to all movement types)
         if (moved) {
-            // Update coordinates using the store action only if position changed
-            if(force.coordinates[0] !== newLat || force.coordinates[1] !== newLng) {
-              updateForceCoordinates(force.id, [newLat, newLng]);
-              forcesCoordinatesUpdated = true; // Mark that a coordinate update happened
-            }
-
-            // Update history
-            const currentHistory = updatedHistory[force.id] || [];
-            updatedHistory[force.id] = [
-                [newLat, newLng], 
-                ...currentHistory.slice(0, 4) // Keep last 5 points including the new one
-            ];
+          if (force.coordinates[0] !== newLat || force.coordinates[1] !== newLng) {
+            updateForceCoordinates(force.id, [newLat, newLng]);
+            forcesCoordinatesUpdated = true;
+          }
+          const currentHistory = updatedHistory[force.id] || [];
+          updatedHistory[force.id] = [
+            [newLat, newLng],
+            ...currentHistory.slice(0, 4)
+          ];
         } else {
-            // Ensure history has the current position even if not moved this tick
-            const currentHistory = updatedHistory[force.id] || [];
-            if (currentHistory.length === 0 || currentHistory[0][0] !== newLat || currentHistory[0][1] !== newLng) {
-                 updatedHistory[force.id] = [
-                     [newLat, newLng], // Add current (stopped) position
-                     ...currentHistory.slice(0, 4) 
-                 ];
-             }
+          const currentHistory = updatedHistory[force.id] || [];
+          if (currentHistory.length === 0 || currentHistory[0][0] !== force.coordinates[0] || currentHistory[0][1] !== force.coordinates[1]) {
+            updatedHistory[force.id] = [
+              [force.coordinates[0], force.coordinates[1]], // Use the current, non-moved position
+              ...currentHistory.slice(0, 4)
+            ];
+          }
         }
       });
 
-      // Update directions state (might have removals)
       setForceDirections(updatedDirections);
-      // Update history state (conditionally based on movement)
-      setForceHistory(updatedHistory); 
+      setForceHistory(updatedHistory);
 
     };
 
-    const intervalId = setInterval(moveForces, 1500); // Keep interval time
+    const intervalId = setInterval(moveForces, 1500);
 
-    // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-    // Add incidents to dependency array as movement logic now depends on incident coordinates
-  }, [forces, incidents, updateForceCoordinates, isMovementEnabled, forceDirections, forceHistory]); 
+  }, [
+    forces,
+    incidents,
+    updateForceCoordinates,
+    isMovementEnabled,
+    forceDirections,
+    forceHistory,
+    dispatchForce,
+    clearRoute,
+    setRoute,
+    updateRouteTargetIndex
+  ]);
 
   useEffect(() => {
     const handleFiltersChange = (event: Event) => {
@@ -1038,8 +1083,8 @@ export default function Map({ position }: MapProps) {
 
     if (selectedForceStatuses.length > 0) {
       filtered = filtered.filter(force => {
-          return selectedForceStatuses.includes(force.status) || 
-                 (selectedForceStatuses.includes('on_road') && !!force.dispatchedToIncidentId);
+        return selectedForceStatuses.includes(force.status) ||
+          (selectedForceStatuses.includes('on_road') && !!force.dispatchedToIncidentId);
       });
     }
 
@@ -1111,12 +1156,14 @@ export default function Map({ position }: MapProps) {
     const incidentCoords = incident.coordinates;
     console.log(`Dispatching ${numPolice} IDLE police and ${numFirefighters} IDLE firefighters for incident ${incident.id} at ${incidentCoords}`);
 
+    // Filter only idle forces *not already* dispatched
     const availablePolice = forces.filter(f => f.type === 'police' && f.status === 'idle' && !f.dispatchedToIncidentId);
     const availableFirefighters = forces.filter(f => f.type === 'firefighter' && f.status === 'idle' && !f.dispatchedToIncidentId);
 
-    const calculateDistances = (forceList: Force[]) => 
+    const calculateDistances = (forceList: Force[]) =>
       forceList.map(force => ({
         ...force,
+        // Use the more accurate distance calculation
         distance: calculateDistance(incidentCoords, force.coordinates)
       })).sort((a, b) => a.distance - b.distance);
 
@@ -1125,9 +1172,10 @@ export default function Map({ position }: MapProps) {
 
     console.log("Dispatching Police Units:", closestPolice.map(f => ({ id: f.id, callsign: f.callsign, distance: f.distance })));
     console.log("Dispatching Firefighter Units:", closestFirefighters.map(f => ({ id: f.id, callsign: f.callsign, distance: f.distance })));
-    
-    closestPolice.forEach(force => dispatchForce(force.id, incidentId));
-    closestFirefighters.forEach(force => dispatchForce(force.id, incidentId));
+
+    // Call dispatchForce with incident coordinates
+    closestPolice.forEach(force => dispatchForce(force.id, incidentId, incidentCoords));
+    closestFirefighters.forEach(force => dispatchForce(force.id, incidentId, incidentCoords));
   };
 
   return (

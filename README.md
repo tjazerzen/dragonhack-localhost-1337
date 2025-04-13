@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# nineline: Emergency Incident Management System
+
+A Next.js application for real-time emergency incident reporting, analysis, and response coordination. This system processes emergency call transcripts using AI to extract critical information about incidents and visualize them on an interactive map.
+
+![nineline](public/nineline.png)
+
+## Features
+
+- **Transcript Analysis**: Processes emergency call transcripts using Google's Gemini AI to extract key incident details
+- **Incident Classification**: Automatically categorizes incidents by type and severity
+- **Resource Allocation**: Suggests required police and firefighter units based on incident analysis
+- **Interactive Map**: Visualizes incident locations and details on a real-time map interface
+- **Modern UI**: Built with React 19 and styled using Tailwind CSS
 
 ## Getting Started
 
 First, run the development server:
 
 ```bash
-npm run dev
-# or
+yarn install
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:1337](http://localhost:1337) with your browser to see the result.
+Open [http://localhost:1337](http://localhost:1337) in your browser to access the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy the `.env.example` file to `.env.local` and fill in the required API keys:
 
-## Learn More
+```bash
+cp .env.example .env.local
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/src/app`: Main application pages and API routes
+- `/src/lib`: Core functionality including AI agent for incident reporting
+- `/src/components`: Reusable UI components
+- `/transcription-scripts`: Sample emergency call transcripts for testing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Technologies Used
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Soniox for transcription
+- Next.js 15
+- React 19
+- Google Gemini AI (via LangChain)
+- Leaflet for map visualization
+- TailwindCSS for styling
+- TypeScript for type safety
