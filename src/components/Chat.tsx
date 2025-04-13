@@ -50,9 +50,9 @@ export default function Chat() {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t flex items-center justify-end gap-2">
+      <div className="border-t flex items-center">
         <button 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-md text-sm font-medium flex items-center gap-1"
+          className="h-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 text-sm font-medium flex flex-1 items-center justify-center gap-1"
           onClick={startAddingIncident}
         >
           <FaPlus size={12} />
