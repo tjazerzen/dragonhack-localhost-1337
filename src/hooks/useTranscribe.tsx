@@ -80,7 +80,7 @@ export default function useTranscribe() {
         setState(newState);
       },
       onPartialResult(result: TranscriptionResult) {
-        console.log('partial result: ', result);
+        // console.log('partial result: ', result);
         setText(result.text);
       },
     });

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import useTranscribe from '@/hooks/useTranscribe';
 import { useChatStore } from '@/store/chatStore';
 import { useIncidentStore } from '@/store/incidentStore';
+import { IncidentStatus, IncidentType } from '@/types/incidents';
 
 export default function RecButton() {
   const [isRecording, setIsRecording] = useState(false);
@@ -91,6 +92,45 @@ export default function RecButton() {
       const report = data.report;
 
       console.log('Generate report agent report received:', report);
+
+      // Validate report data
+      if (!report) {
+        console.error('Received empty report from API');
+        return;
+      }
+
+      // Store report data in the incident store
+      useIncidentStore.getState().setReportData(report);
+
+      // Get extracted coordinates from the store
+      const extractedCoordinates = useIncidentStore.getState().extractedCoordinates;
+      const extractedLocation = useIncidentStore.getState().extractedLocation;
+
+      // Set location from report if available
+      if (report.location_description) {
+        useIncidentStore.getState().setExtractedLocation(report.location_description);
+      }
+
+      // If we already have coordinates, make sure the incident form is opened
+      if (extractedCoordinates) {
+        // Make sure the adding incident mode is activated to show the form
+        useIncidentStore.getState().startAddingIncident();
+
+        console.log('Form should be pre-filled with:', {
+          type: report.type,
+          summary: report.summary,
+          status: report.status,
+          location: report.location_description || extractedLocation,
+          coordinates: [extractedCoordinates.lat, extractedCoordinates.lng],
+          noPoliceSupport: report.noPoliceSupport || 0,
+          noFirefighterSupport: report.noFirefighterSupport || 0
+        });
+      } else {
+        console.warn('No coordinates available for the incident. The report was generated but waiting for map click.');
+
+        // Start adding incident mode - the map will allow manual placement
+        useIncidentStore.getState().startAddingIncident();
+      }
     } catch (error) {
       console.error('Error calling generate report agent API:', error);
     }
@@ -108,7 +148,7 @@ export default function RecButton() {
 
   useEffect(() => {
     if (text && text !== lastProcessedText.current) {
-      console.log('tokenized text: ', text);
+      // console.log('tokenized text: ', text);
       const match = text.match(/spk:(\d+)(.*)/);
       console.log('match: ', match);
       if (match) {
@@ -131,13 +171,12 @@ export default function RecButton() {
   }, [text, currentSpeaker, currentMessageId, addMessage, appendToMessage, callGeocodeAgent]);
 
   return (
-    <Button 
+    <Button
       variant={null}
-      className={`h-full px-4 py-3 flex w-1/2 flex-row justify-center items-center gap-2 hover:cursor-pointer transition-all duration-300 ease-in-out text-sm font-medium rounded-none ${
-        isRecording 
-          ? 'bg-red-600 text-white hover:bg-red-700' 
-          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-      }`} 
+      className={`h-full px-4 py-3 flex w-1/2 flex-row justify-center items-center gap-2 hover:cursor-pointer transition-all duration-300 ease-in-out text-sm font-medium rounded-none ${isRecording
+        ? 'bg-red-600 text-white hover:bg-red-700'
+        : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+        }`}
       onClick={() => setIsRecording(!isRecording)}
     >
       <motion.div
@@ -152,9 +191,9 @@ export default function RecButton() {
           layout: { duration: 0.3 }
         }}
       >
-        <Circle 
-          color={isRecording ? 'white' : 'currentColor'} 
-          fill={isRecording ? 'white' : 'currentColor'} 
+        <Circle
+          color={isRecording ? 'white' : 'currentColor'}
+          fill={isRecording ? 'white' : 'currentColor'}
           className='w-4 h-4 transition-colors duration-300'
         />
       </motion.div>
