@@ -1,15 +1,11 @@
+'use client';
+
 import { useIncidentStore } from '@/store/incidentStore';
 import { IncidentStatus, IncidentType } from '@/types/incidents';
-import { FaExclamationCircle, FaExclamationTriangle, FaCheckCircle, FaSearch, FaChevronLeft } from 'react-icons/fa';
-import { IconType } from 'react-icons';
+import { FaSearch, FaChevronLeft } from 'react-icons/fa';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
-
-const statusConfig: Record<IncidentStatus, { color: string; icon: IconType }> = {
-  critical: { color: 'bg-red-100 text-red-600', icon: FaExclamationCircle },
-  moderate: { color: 'bg-orange-100 text-orange-600', icon: FaExclamationTriangle },
-  resolved: { color: 'bg-green-100 text-green-600', icon: FaCheckCircle },
-};
+import { statusIcons } from '@/utils/mapUtils';
 
 // Make incident type labels more readable
 const typeLabels: Record<IncidentType, string> = {
@@ -29,6 +25,13 @@ const statusLabels: Record<IncidentStatus, string> = {
   critical: 'Critical',
   moderate: 'Moderate',
   resolved: 'Resolved',
+};
+
+// Add new statusColor config based on original badges
+const statusColorConfig: Record<IncidentStatus, string> = {
+  critical: 'bg-red-100 text-red-600',
+  moderate: 'bg-orange-100 text-orange-600',
+  resolved: 'bg-green-100 text-green-600',
 };
 
 export default function IncidentList() {
@@ -300,7 +303,6 @@ export default function IncidentList() {
       
       <div className="overflow-y-auto flex-1">
         {filteredIncidents.map((incident) => {
-          const StatusIcon = statusConfig[incident.status].icon;
           return (
             <div
               key={incident.id}
@@ -308,7 +310,7 @@ export default function IncidentList() {
               onClick={() => selectIncident(incident.id)}
             >
               <div className="flex items-start gap-3">
-                <StatusIcon className={`mt-1 ${statusConfig[incident.status].color}`} />
+                <img src={statusIcons[incident.status]} alt={`${incident.status} status`} className="mt-1 w-5 h-5" />
                 <div>
                   <h3 className="font-medium">{incident.summary}</h3>
                   <p className="text-gray-500 text-xs mt-1">
@@ -317,7 +319,7 @@ export default function IncidentList() {
                   <p className="text-gray-500 text-xs">
                     {incident.timestamp}
                   </p>
-                  <div className={`inline-block px-2 py-1 rounded-full text-xs mt-2 ${statusConfig[incident.status].color}`}>
+                  <div className={`inline-block px-2 py-1 rounded-full text-xs mt-2 ${statusColorConfig[incident.status]}`}>
                     {incident.status.toUpperCase()}
                   </div>
                 </div>

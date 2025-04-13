@@ -94,9 +94,13 @@ export default function RecButton() {
   }, [text, addMessage, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession]);
 
   return (
-    <Button
-      variant={isRecording ? 'destructive' : 'ghost'}
-      className='w-[130px] flex flex-row justify-start items-center gap-2 hover:cursor-pointer transition-all duration-300 ease-in-out'
+    <Button 
+      variant={null}
+      className={`h-full px-4 py-3 flex flex-1 flex-row justify-center items-center gap-2 hover:cursor-pointer transition-all duration-300 ease-in-out text-sm font-medium rounded-none ${
+        isRecording 
+          ? 'bg-red-600 text-white hover:bg-red-700' 
+          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+      }`} 
       onClick={() => setIsRecording(!isRecording)}
     >
       <motion.div
@@ -105,15 +109,15 @@ export default function RecButton() {
           scale: isRecording ? [1, 1.2, 1] : 1,
         }}
         transition={{
-          duration: 2,
+          duration: 1,
           repeat: isRecording ? Infinity : 0,
           ease: 'easeInOut',
           layout: { duration: 0.3 }
         }}
       >
-        <Circle
-          color={isRecording ? 'white' : 'red'}
-          fill={isRecording ? 'white' : 'red'}
+        <Circle 
+          color={isRecording ? 'white' : 'currentColor'} 
+          fill={isRecording ? 'white' : 'currentColor'} 
           className='w-4 h-4 transition-colors duration-300'
         />
       </motion.div>
@@ -128,7 +132,7 @@ export default function RecButton() {
             duration: 0.3,
             layout: { duration: 0.3 }
           }}
-          className='text-medium w-fit text-center'
+          className={`text-medium w-fit text-center font-medium ${isRecording ? 'text-white' : 'text-gray-800'}`}
         >
           {isRecording ? 'Recording...' : 'Record'}
         </motion.p>

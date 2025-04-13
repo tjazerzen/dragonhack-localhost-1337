@@ -9,6 +9,7 @@ import CollapsedPanel from '@/components/CollapsedPanel';
 import { useLayoutStore } from '@/store/layoutStore';
 import { useState } from 'react';
 import { Resizable } from 're-resizable';
+import NavBar from '@/components/NavBar';
 
 const Map = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -19,8 +20,8 @@ export default function MapPanel() {
   const isIncidentPanelCollapsed = useLayoutStore((state) => state.isIncidentPanelCollapsed);
   const activeSidePanel = useLayoutStore((state) => state.activeSidePanel);
   const position: LatLngExpression = [46.061583, 14.507542];
-  const [sidebarWidth, setSidebarWidth] = useState(400);
-  const [chatSidebarWidth, setChatSidebarWidth] = useState(400);
+  const [sidebarWidth, setSidebarWidth] = useState(350);
+  const [chatSidebarWidth, setChatSidebarWidth] = useState(350);
 
   // Render the appropriate panel based on the active side panel type
   const renderSidePanel = () => {
@@ -36,7 +37,7 @@ export default function MapPanel() {
 
   return (
     <div className="flex flex-col h-[100vh] w-full">
-      <div className="flex flex-row flex-1 overflow-hidden">
+      <div className="flex flex-row flex-1 overflow-hidden relative">
         {isIncidentPanelCollapsed ? (
           <CollapsedPanel />
         ) : (
@@ -81,7 +82,10 @@ export default function MapPanel() {
           </Resizable>
         )}
         <div className="h-full relative flex-grow transition-all duration-300">
-          <div className="h-full w-full z-10">
+          <div className="absolute top-0 left-0 right-0 z-20">
+            <NavBar />
+          </div>
+          <div className="h-full w-full z-10 pt-11">
             <Map position={position} />
           </div>
         </div>
@@ -115,7 +119,7 @@ export default function MapPanel() {
             // Trigger map redraw after resize
             window.dispatchEvent(new CustomEvent('sidebarResized')); 
           }}
-          className="border-l"
+          className="border-l z-20"
         >
           <div 
             className="h-full overflow-y-auto"
