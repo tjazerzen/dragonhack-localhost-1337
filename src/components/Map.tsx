@@ -725,91 +725,156 @@ export default function Map({ position }: MapProps) {
   const [forceDirections, setForceDirections] = useState<Record<string, { lat: number, lng: number }>>({});
   const [forceHistory, setForceHistory] = useState<Record<string, Array<[number, number]>>>({});
 
-  // Add more realistic movement to force units that are on_road
+  // Add more realistic movement to force units
   useEffect(() => {
     // Skip movement if disabled
     if (!isMovementEnabled) return;
-    
-    // Initialize force directions if not set
+
+    // Define movement step size and stopping threshold
+    const stepSize = 0.00045; // Controls speed
+    const stopThreshold = 0.0001; // Distance threshold to consider unit arrived
+
+    // Initialize directions only for initially 'on_road' non-dispatched units
     if (Object.keys(forceDirections).length === 0) {
       const initialDirections: Record<string, { lat: number, lng: number }> = {};
       const initialHistory: Record<string, Array<[number, number]>> = {};
-      
+
       forces.forEach(force => {
-        if (force.status === 'on_road') {
-          // Random direction vector with normalized magnitude - 50% faster
+        if (force.status === 'on_road' && !force.dispatchedToIncidentId) { 
           const angle = Math.random() * Math.PI * 2;
-          initialDirections[force.id] = { 
-            lat: Math.sin(angle) * 0.00045, // 50% faster (0.0003 * 1.5)
-            lng: Math.cos(angle) * 0.00045 
+          initialDirections[force.id] = {
+            lat: Math.sin(angle) * stepSize,
+            lng: Math.cos(angle) * stepSize
           };
         }
-        // Initialize history for ALL forces
         initialHistory[force.id] = [force.coordinates];
       });
-      
+
       setForceDirections(initialDirections);
       setForceHistory(initialHistory);
     }
-    
+
     const moveForces = () => {
       const updatedDirections = { ...forceDirections };
       const updatedHistory = { ...forceHistory };
-      
+      let forcesCoordinatesUpdated = false; // Flag to optimize state updates
+
       forces.forEach(force => {
-        if (force.status === 'on_road') {
-          let direction = updatedDirections[force.id];
-          
-          if (!direction) {
-            const angle = Math.random() * Math.PI * 2;
-            direction = { 
-              lat: Math.sin(angle) * 0.00045,
-              lng: Math.cos(angle) * 0.00045
-            };
+        let newLat = force.coordinates[0];
+        let newLng = force.coordinates[1];
+        let moved = false;
+
+        if (force.dispatchedToIncidentId) {
+          // --- Dispatched Unit Logic ---
+          const targetIncident = incidents.find(inc => inc.id === force.dispatchedToIncidentId);
+
+          if (targetIncident) {
+            const targetCoords = targetIncident.coordinates;
+            const currentCoords = force.coordinates;
+
+            const diffLat = targetCoords[0] - currentCoords[0];
+            const diffLng = targetCoords[1] - currentCoords[1];
+            const distance = Math.sqrt(diffLat * diffLat + diffLng * diffLng);
+
+            if (distance > stopThreshold) {
+              // Calculate movement step, ensuring it doesn't overshoot
+              const moveDistance = Math.min(stepSize, distance);
+              const moveLat = (diffLat / distance) * moveDistance;
+              const moveLng = (diffLng / distance) * moveDistance;
+
+              newLat = currentCoords[0] + moveLat;
+              newLng = currentCoords[1] + moveLng;
+              moved = true;
+            } else {
+              // Arrived at destination or very close
+              if (currentCoords[0] !== targetCoords[0] || currentCoords[1] !== targetCoords[1]) {
+                newLat = targetCoords[0]; // Snap to exact target coordinates
+                newLng = targetCoords[1];
+                moved = true;
+                // Consider updating status here, e.g., back to idle or 'at_scene'
+                // updateForceStatus(force.id, 'idle'); 
+                // Or clear dispatch: dispatchForce(force.id, null); // Needs store modification
+              }
+              // Unit stops moving as it has reached the target
+            }
+          } else {
+            console.warn(`Incident ${force.dispatchedToIncidentId} not found for dispatched force ${force.id}. Stopping movement.`);
+            // Unit stops if incident disappears
           }
-          
-          if (Math.random() < 0.05) {
-            const angle = Math.random() * Math.PI * 2;
-            const newDirection = {
-              lat: Math.sin(angle) * 0.00045,
-              lng: Math.cos(angle) * 0.00045
-            };
-            
-            direction = {
-              lat: direction.lat * 0.7 + newDirection.lat * 0.3,
-              lng: direction.lng * 0.7 + newDirection.lng * 0.3
-            };
-          }
-          
-          const newLat = force.coordinates[0] + direction.lat;
-          const newLng = force.coordinates[1] + direction.lng;
-          
-          updateForceCoordinates(force.id, [newLat, newLng]);
-          
-          updatedDirections[force.id] = direction;
-          
-          updatedHistory[force.id] = [
-            [newLat, newLng], 
-            ...(updatedHistory[force.id] || []).slice(0, 4)
-          ];
-        } else {
-          if (!updatedHistory[force.id] || updatedHistory[force.id][0] !== force.coordinates) {
-             updatedHistory[force.id] = [force.coordinates];
-          }
+          // Remove random direction if one exists for this dispatched unit
           if (updatedDirections[force.id]) {
             delete updatedDirections[force.id];
           }
+
+        } else if (force.status === 'on_road') {
+          // --- Random Movement Logic (Non-Dispatched, On Road) ---
+          let direction = updatedDirections[force.id];
+          if (!direction) { // Initialize direction if missing
+            const angle = Math.random() * Math.PI * 2;
+            direction = { lat: Math.sin(angle) * stepSize, lng: Math.cos(angle) * stepSize };
+          }
+
+          // Randomly adjust direction occasionally
+          if (Math.random() < 0.05) { 
+            const angle = Math.random() * Math.PI * 2;
+            const newDirection = { lat: Math.sin(angle) * stepSize, lng: Math.cos(angle) * stepSize };
+            // Blend for smoother transition
+            direction = { lat: direction.lat * 0.7 + newDirection.lat * 0.3, lng: direction.lng * 0.7 + newDirection.lng * 0.3 };
+          }
+
+          newLat = force.coordinates[0] + direction.lat;
+          newLng = force.coordinates[1] + direction.lng;
+          updatedDirections[force.id] = direction; // Store updated direction
+          moved = true;
+
+        } else {
+          // --- Idle Unit Logic ---
+          // Ensure no random direction is stored for idle units
+           if (updatedDirections[force.id]) {
+             delete updatedDirections[force.id];
+           }
+           // moved remains false
+        }
+
+        // --- Update State and History ---
+        if (moved) {
+            // Update coordinates using the store action only if position changed
+            if(force.coordinates[0] !== newLat || force.coordinates[1] !== newLng) {
+              updateForceCoordinates(force.id, [newLat, newLng]);
+              forcesCoordinatesUpdated = true; // Mark that a coordinate update happened
+            }
+
+            // Update history
+            const currentHistory = updatedHistory[force.id] || [];
+            updatedHistory[force.id] = [
+                [newLat, newLng], 
+                ...currentHistory.slice(0, 4) // Keep last 5 points including the new one
+            ];
+        } else {
+            // Ensure history has the current position even if not moved this tick
+            const currentHistory = updatedHistory[force.id] || [];
+            if (currentHistory.length === 0 || currentHistory[0][0] !== newLat || currentHistory[0][1] !== newLng) {
+                 updatedHistory[force.id] = [
+                     [newLat, newLng], // Add current (stopped) position
+                     ...currentHistory.slice(0, 4) 
+                 ];
+             }
         }
       });
-      
+
+      // Update directions state (might have removals)
       setForceDirections(updatedDirections);
-      setForceHistory(updatedHistory);
+      // Update history state (conditionally based on movement)
+      setForceHistory(updatedHistory); 
+
     };
-    
-    const intervalId = setInterval(moveForces, 1500);
-    
+
+    const intervalId = setInterval(moveForces, 1500); // Keep interval time
+
+    // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-  }, [forces, updateForceCoordinates, isMovementEnabled, forceDirections, forceHistory]);
+    // Add incidents to dependency array as movement logic now depends on incident coordinates
+  }, [forces, incidents, updateForceCoordinates, isMovementEnabled, forceDirections, forceHistory]); 
 
   useEffect(() => {
     const handleFiltersChange = (event: Event) => {
