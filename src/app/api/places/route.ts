@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const width = searchParams.get('width') || DEFAULT_WIDTH;
   const height = searchParams.get('height') || DEFAULT_HEIGHT;
   const style = searchParams.get('style') || DEFAULT_STYLE;
-  
+
   if (!lat || !lng) {
     console.warn('❌ Missing coordinates');
     return NextResponse.json({ error: 'Missing latitude or longitude' }, {
@@ -43,9 +43,9 @@ export async function GET(request: Request) {
     // Construct the Mapbox Static Images API URL
     // Format: https://api.mapbox.com/styles/v1/{username}/{style_id}/static/{longitude},{latitude},{zoom}/{width}x{height}
     const mapboxUrl = `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${lng},${lat},${zoom}/${width}x${height}?access_token=${MAPBOX_ACCESS_TOKEN}`;
-    
-    console.log('🖼️ Generated Mapbox static image URL (token redacted):', mapboxUrl);
-    
+
+    //console.log('🖼️ Generated Mapbox static image URL (token redacted):', mapboxUrl);
+
     // Return the image URL directly
     return NextResponse.json({ photoUrl: mapboxUrl }, {
       headers: {

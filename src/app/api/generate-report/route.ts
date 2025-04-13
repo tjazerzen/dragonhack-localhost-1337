@@ -10,12 +10,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid transcript format in request body (must be a string)' }, { status: 400 });
     }
 
-    console.log('API route /api/generate-report received transcript:', transcript.substring(0, 100) + '...');
+    //console.log('API route /api/generate-report received transcript:', transcript.substring(0, 100) + '...');
 
     // Call the report generation function
     const report: AccidentReport = await generateAccidentReport(transcript);
 
-    console.log('API route /api/generate-report result:', report);
+    //console.log('API route /api/generate-report result:', report);
 
     // Return the resulting report object
     return NextResponse.json({ report });
