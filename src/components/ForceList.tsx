@@ -189,7 +189,7 @@ export default function ForceList() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <div className="h-full bg-white flex flex-col w-full">
+    <div className="h-full bg-sidebar flex flex-col w-full">
       <div className="flex">
         <button 
           className={`px-4 py-3 text-sm font-medium flex items-center justify-center flex-1 ${

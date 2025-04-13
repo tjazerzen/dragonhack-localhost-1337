@@ -206,7 +206,7 @@ export default function IncidentList() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <div className="h-full bg-white flex flex-col w-full">
+    <div className="h-full bg-sidebar flex flex-col w-full">
       <div className="flex">
         <button 
           className={`px-4 py-3 text-sm font-medium flex items-center justify-center flex-1 ${
@@ -270,7 +270,7 @@ export default function IncidentList() {
             </button>
             
             {isFilterOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-10">
+              <div className="absolute right-0 mt-2 w-64 bg-sidebar rounded-lg shadow-lg border z-10">
                 <div className="p-3 border-b">
                   <h3 className="font-medium text-gray-700">Filter by Type</h3>
                   <div className="mt-2 space-y-1.5">

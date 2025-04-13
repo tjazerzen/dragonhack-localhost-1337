@@ -5,7 +5,7 @@ export default function CollapsedPanel() {
   const toggleIncidentPanel = useLayoutStore((state) => state.toggleIncidentPanel);
   
   return (
-    <div className="h-full flex flex-col items-center bg-white border-r w-10">
+    <div className="h-full flex flex-col items-center bg-sidebar border-r w-10">
       <button
         className="mt-4 p-2 hover:bg-gray-100 rounded-full"
         onClick={toggleIncidentPanel}

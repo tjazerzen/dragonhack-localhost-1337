@@ -23,7 +23,7 @@ export default function Chat() {
   }, [messages.length]);
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-sidebar">
       <div className="border-b flex items-center">
         <button 
           className="h-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 text-sm font-medium flex flex-1 items-center justify-center gap-1"
