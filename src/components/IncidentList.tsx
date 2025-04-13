@@ -56,6 +56,13 @@ const statusColorConfig: Record<IncidentStatus, string> = {
   resolved: 'bg-green-100 text-green-600',
 };
 
+// Define subtle background colors for incident cards
+const statusBgColorConfig: Record<IncidentStatus, string> = {
+  critical: 'bg-red-50 hover:bg-red-100',
+  moderate: 'bg-orange-50 hover:bg-orange-100',
+  resolved: 'bg-green-50 hover:bg-green-100',
+};
+
 export default function IncidentList() {
   const incidents = useIncidentStore((state) => state.incidents);
   const selectIncident = useIncidentStore((state) => state.selectIncident);
@@ -342,7 +349,7 @@ export default function IncidentList() {
           return (
             <div
               key={incident.id}
-              className="p-4 border-b hover:bg-gray-50 cursor-pointer"
+              className={`p-4 border-b cursor-pointer ${statusBgColorConfig[incident.status]}`}
               onClick={() => selectIncident(incident.id)}
             >
               <div className="flex items-start gap-3">

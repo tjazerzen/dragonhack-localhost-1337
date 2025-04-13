@@ -39,6 +39,12 @@ const forceIconPaths: Record<ForceType, Record<ForceStatus, string>> = {
   }
 };
 
+// Define styles for force type cards (background, hover, outline)
+const forceTypeStyleConfig: Record<ForceType, string> = {
+  police: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
+  firefighter: 'bg-red-50 hover:bg-red-100 border-red-200',
+};
+
 export default function ForceList() {
   const forces = useForceStore((state) => state.forces);
   const selectedForceId = useForceStore((state) => state.selectedForceId);
@@ -327,7 +333,7 @@ export default function ForceList() {
           return (
             <div
               key={force.id}
-              className={`p-4 border-b hover:bg-gray-50 cursor-pointer ${selectedForceId === force.id ? 'bg-blue-50' : ''}`}
+              className={`p-4 border-b border-b-gray-200 cursor-pointer border-l-4 ${forceTypeStyleConfig[force.type]} ${selectedForceId === force.id ? 'ring-2 ring-offset-1 ring-blue-400' : ''}`}
               onClick={() => selectForce(force.id)}
             >
               <div className="flex items-start gap-3">
