@@ -166,8 +166,13 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
 
       <div className="mt-2 text-right">
         <button
-          className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs"
-          onClick={() => onDispatch(incident.id, policeSupportNeeded, firefighterSupportNeeded)}
+          className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
+          onClick={() => {
+            onDispatch(incident.id, policeSupportNeeded, firefighterSupportNeeded);
+            // Close the popup after dispatching
+            const marker = document.querySelector('.leaflet-popup-close-button') as HTMLElement;
+            if (marker) marker.click();
+          }}
         >
           Dispatch
         </button>
