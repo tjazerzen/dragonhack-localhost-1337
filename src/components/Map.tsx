@@ -449,14 +449,16 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
 }
 
 // Add force icons for police and firefighter units
-const forceIcons: Record<ForceType, Record<ForceStatus, string>> = {
+const forceIcons: Record<ForceType, Record<ForceStatus | 'dispatched', string>> = {
   police: {
     idle: '/police-car-transparent-idle.png',
     on_road: '/police-car-transparent-not-idle.png',
+    dispatched: '/police-car-on-the-call.png'
   },
   firefighter: {
     idle: '/firefighter-transparent-idle.png',
     on_road: '/firefighter-transparent-not-idle.png',
+    dispatched: '/firefighter-on-the-call.png'
   }
 };
 
@@ -659,13 +661,18 @@ function MapContent({
         const iconSize: [number, number] = isDispatched ? [45, 45] : [33, 33];
         const iconAnchor: [number, number] = isDispatched ? [15, 15] : [11, 11];
         const popupAnchor: [number, number] = isDispatched ? [0, -15] : [0, -11];
+        
+        // Determine the icon based on dispatch status first
+        const iconUrl = isDispatched 
+          ? forceIcons[force.type]['dispatched'] 
+          : forceIcons[force.type][force.status];
 
         return (
           <AnimatedMarker
             key={`force-${force.id}`}
             position={force.coordinates}
             icon={L.icon({
-              iconUrl: forceIcons[force.type][force.status],
+              iconUrl: iconUrl, // Use the determined iconUrl
               iconSize: iconSize,
               iconAnchor: iconAnchor,
               popupAnchor: popupAnchor,
