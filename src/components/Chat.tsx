@@ -24,6 +24,16 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-full bg-white">
+      <div className="border-b flex items-center">
+        <button 
+          className="h-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 text-sm font-medium flex flex-1 items-center justify-center gap-1"
+          onClick={startAddingIncident}
+        >
+          <FaPlus size={12} />
+          Add Incident
+        </button>
+        <RecButton />
+      </div>
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         {messages.length === 0 ? (
           <div className="flex justify-center items-center h-full">
@@ -57,16 +67,6 @@ export default function Chat() {
           ))
         )}
         <div ref={messagesEndRef} />
-      </div>
-      <div className="border-t flex items-center">
-        <button 
-          className="h-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 text-sm font-medium flex flex-1 items-center justify-center gap-1"
-          onClick={startAddingIncident}
-        >
-          <FaPlus size={12} />
-          Add Incident
-        </button>
-        <RecButton />
       </div>
     </div>
   );
