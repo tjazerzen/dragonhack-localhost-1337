@@ -1,10 +1,22 @@
 import { useForceStore } from '@/store/forceStore';
 import { ForceType, ForceStatus } from '@/types/forces';
-import { FaChevronLeft } from 'react-icons/fa6';
-import { FaSearch, FaCircle } from 'react-icons/fa';
+import { FaChevronLeft, FaSearch, FaCircle } from 'react-icons/fa';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 
+// Define sort order for Force Types
+const typeSortOrder: Record<ForceType, number> = {
+  police: 1,
+  firefighter: 2,
+};
+
+// Define sort order for Force Statuses
+const statusSortOrder: Record<ForceStatus, number> = {
+  idle: 1,
+  on_road: 2,
+};
+
+// Restore local definitions
 const forceTypeConfig: Record<ForceType, { label: string }> = {
   police: { label: 'Police' },
   firefighter: { label: 'Firefighter' },
@@ -141,6 +153,19 @@ export default function ForceList() {
     if (selectedStatuses.length > 0) {
       filtered = filtered.filter(force => selectedStatuses.includes(force.status));
     }
+    
+    // Sort forces: Type (Police > Fire), then Status (Idle > On Road)
+    filtered.sort((a, b) => {
+      // Compare type
+      const typeDiff = typeSortOrder[a.type] - typeSortOrder[b.type];
+      if (typeDiff !== 0) {
+        return typeDiff;
+      }
+      
+      // Compare status (Idle first)
+      const statusDiff = statusSortOrder[a.status] - statusSortOrder[b.status];
+      return statusDiff;
+    });
     
     return filtered;
   }, [forces, searchText, selectedTypes, selectedStatuses]);
@@ -330,4 +355,4 @@ export default function ForceList() {
       </div>
     </div>
   );
-} 
+}

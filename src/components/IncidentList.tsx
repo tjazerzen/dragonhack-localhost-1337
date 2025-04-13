@@ -7,6 +7,28 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLayoutStore } from '@/store/layoutStore';
 import { statusIcons } from '@/utils/mapUtils';
 
+// Helper function to parse time string (e.g., "10:31AM") into minutes since midnight
+const parseTimeString = (timeString: string): number => {
+  const [time, modifier] = timeString.split(/(AM|PM)/);
+  let [hours, minutes] = time.split(':').map(Number);
+
+  if (modifier === 'PM' && hours !== 12) {
+    hours += 12;
+  }
+  if (modifier === 'AM' && hours === 12) { // Midnight case
+    hours = 0;
+  }
+  
+  return hours * 60 + minutes;
+};
+
+// Severity order for sorting
+const severityOrder: Record<IncidentStatus, number> = {
+  critical: 1,
+  moderate: 2,
+  resolved: 3,
+};
+
 // Make incident type labels more readable
 const typeLabels: Record<IncidentType, string> = {
   fire: 'Fire',
@@ -146,6 +168,20 @@ export default function IncidentList() {
     if (selectedStatuses.length > 0) {
       filtered = filtered.filter(incident => selectedStatuses.includes(incident.status));
     }
+    
+    // Sort incidents: Severity (desc), then Time (desc)
+    filtered.sort((a, b) => {
+      // Compare severity
+      const severityDiff = severityOrder[a.status] - severityOrder[b.status];
+      if (severityDiff !== 0) {
+        return severityDiff;
+      }
+      
+      // Compare time (most recent first)
+      const timeA = parseTimeString(a.timestamp);
+      const timeB = parseTimeString(b.timestamp);
+      return timeB - timeA; 
+    });
     
     return filtered;
   }, [incidents, searchText, selectedTypes, selectedStatuses]);
