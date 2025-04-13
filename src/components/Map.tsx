@@ -508,7 +508,9 @@ function MapContent({
   isLoading, 
   markerRefs,
   forceHistory,
-  showMotionTrails 
+  showMotionTrails,
+  selectedForceId,
+  selectForce,
 }: {
   incidents: Incident[];
   forces: Force[];
@@ -521,6 +523,8 @@ function MapContent({
   markerRefs: React.MutableRefObject<Record<string, L.Marker>>;
   forceHistory: Record<string, Array<[number, number]>>;
   showMotionTrails: boolean;
+  selectedForceId: string | null;
+  selectForce: (id: string | null) => void;
 }) {
   const map = useMap();
   const [isMapReady, setIsMapReady] = useState(false);
@@ -626,6 +630,12 @@ function MapContent({
             click: () => handleForceClick(force),
             // Store reference to the force marker
             add: (e) => markerRefs.current[`force-${force.id}`] = e.target,
+            // Add popupclose handler
+            popupclose: () => {
+              if (selectedForceId === force.id) {
+                selectForce(null); // Clear selection when popup is closed manually
+              }
+            }
           }}
         >
           <Popup className="rounded-lg shadow-lg border border-gray-200" minWidth={220}>
@@ -645,6 +655,7 @@ export default function Map({ position }: MapProps) {
   
   const forces = useForceStore((state) => state.forces);
   const selectForce = useForceStore((state) => state.selectForce);
+  const selectedForceId = useForceStore((state) => state.selectedForceId);
   const updateForceCoordinates = useForceStore((state) => state.updateForceCoordinates);
   
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
@@ -978,6 +989,8 @@ export default function Map({ position }: MapProps) {
             markerRefs={markerRefs}
             forceHistory={forceHistory}
             showMotionTrails={showMotionTrails}
+            selectedForceId={selectedForceId}
+            selectForce={selectForce}
           />
         </MapContainer>
       </MarkerContext.Provider>
