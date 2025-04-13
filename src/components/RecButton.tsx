@@ -148,7 +148,7 @@ export default function RecButton() {
 
   useEffect(() => {
     if (text && text !== lastProcessedText.current) {
-      console.log('tokenized text: ', text);
+      // console.log('tokenized text: ', text);
       const match = text.match(/spk:(\d+)(.*)/);
       console.log('match: ', match);
       if (match) {
