@@ -215,6 +215,7 @@ function AddIncidentMapEvents() {
   const map = useMap();
   const isAddingIncident = useIncidentStore((state) => state.isAddingIncident);
   const cancelAddingIncident = useIncidentStore((state) => state.cancelAddingIncident);
+  const extractedCoordinates = useIncidentStore((state) => state.extractedCoordinates);
   const [newIncidentPosition, setNewIncidentPosition] = useState<[number, number] | null>(null);
   
   // Add console log to debug
@@ -229,6 +230,17 @@ function AddIncidentMapEvents() {
       setNewIncidentPosition(null); // Reset position when cancelling
     }
   }, [isAddingIncident, map]);
+
+  // Use extracted coordinates if available
+  useEffect(() => {
+    if (extractedCoordinates && isAddingIncident) {
+      const { lat, lng } = extractedCoordinates;
+      // Set marker position for the new incident
+      setNewIncidentPosition([lat, lng]);
+      // Center the map on the extracted location
+      map.setView([lat, lng], 15);
+    }
+  }, [extractedCoordinates, isAddingIncident, map]);
   
   // Event handler for map clicks
   useMapEvents({
@@ -281,12 +293,20 @@ interface AddIncidentFormProps {
 
 function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
   const addIncident = useIncidentStore((state) => state.addIncident);
+  const extractedLocation = useIncidentStore((state) => state.extractedLocation);
   const [type, setType] = useState<IncidentType>('fire');
   const [summary, setSummary] = useState('');
   const [status, setStatus] = useState<IncidentStatus>('critical');
-  const [location, setLocation] = useState('');
+  const [location, setLocation] = useState(extractedLocation || '');
   const [noPoliceSupport, setNoPoliceSupport] = useState(0);
   const [noFirefighterSupport, setNoFirefighterSupport] = useState(0);
+  
+  // Update location if extractedLocation changes
+  useEffect(() => {
+    if (extractedLocation) {
+      setLocation(extractedLocation);
+    }
+  }, [extractedLocation]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
