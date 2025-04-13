@@ -215,7 +215,7 @@ function AddIncidentMapEvents() {
   const map = useMap();
   const isAddingIncident = useIncidentStore((state) => state.isAddingIncident);
   const cancelAddingIncident = useIncidentStore((state) => state.cancelAddingIncident);
-  const [tempMarker, setTempMarker] = useState<[number, number] | null>(null);
+  const [newIncidentPosition, setNewIncidentPosition] = useState<[number, number] | null>(null);
   
   // Add console log to debug
   useEffect(() => {
@@ -226,6 +226,7 @@ function AddIncidentMapEvents() {
       map.getContainer().style.cursor = 'crosshair';
     } else {
       map.getContainer().style.cursor = '';
+      setNewIncidentPosition(null); // Reset position when cancelling
     }
   }, [isAddingIncident, map]);
   
@@ -235,81 +236,34 @@ function AddIncidentMapEvents() {
       if (isAddingIncident) {
         console.log('📍 Map clicked at:', e.latlng);
         const { lat, lng } = e.latlng;
-        setTempMarker([lat, lng]);
+        setNewIncidentPosition([lat, lng]);
       }
     },
   });
   
-  // Display a message when in add incident mode
-  useEffect(() => {
-    if (isAddingIncident) {
-      console.log('🔍 Trying to add notification, map container:', map?.getContainer());
-      
-      // Create a notification element
-      const notification = document.createElement('div');
-      notification.id = 'add-incident-notification';
-      // Make sure notification has higher z-index and is positioned correctly
-      notification.className = 'absolute top-0 left-0 right-0 bg-blue-600 text-white py-2 px-4 text-center z-[9999]';
-      notification.style.position = 'absolute';
-      notification.style.zIndex = '9999'; // Extremely high z-index
-      notification.innerHTML = 'Click on the map to place the new incident';
-      
-      // Add a cancel button
-      const cancelButton = document.createElement('button');
-      cancelButton.className = 'ml-2 bg-blue-700 px-2 py-1 rounded';
-      cancelButton.innerHTML = 'Cancel';
-      cancelButton.onclick = () => {
-        cancelAddingIncident();
-        setTempMarker(null);
-      };
-      notification.appendChild(cancelButton);
-      
-      try {
-        // Instead of adding to map container, add to its parent which has fewer z-index conflicts
-        const mapContainer = map.getContainer();
-        const parentContainer = mapContainer.parentElement;
-        
-        if (parentContainer) {
-          parentContainer.appendChild(notification);
-        } else {
-          // Fallback to map container if parent not available
-          mapContainer.appendChild(notification);
-        }
-        console.log('✅ Successfully added notification');
-      } catch (error) {
-        console.error('❌ Error adding notification to map container:', error);
-      }
-      
-      return () => {
-        try {
-          const element = document.getElementById('add-incident-notification');
-          if (element) {
-            element.remove();
-            console.log('🧹 Removed notification from map container');
-          }
-        } catch (error) {
-          console.error('❌ Error removing notification:', error);
-        }
-      };
-    }
-  }, [isAddingIncident, cancelAddingIncident, map]);
-  
-  // If a temporary marker is placed, show a form to complete the incident details
-  if (tempMarker && isAddingIncident) {
+  // Render the new incident marker if position is set
+  if (newIncidentPosition && isAddingIncident) {
     return (
       <AnimatedMarker
-        position={tempMarker}
+        position={newIncidentPosition}
         icon={L.icon({
           iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzJCOEJGRiIvPjxwYXRoIGQ9Ik0xMiA4VjE2TTggMTJIMTYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+',
           iconSize: [24, 24],
           iconAnchor: [12, 12],
           popupAnchor: [0, -12],
         })}
+        eventHandlers={{
+          add: (e) => {
+            // Force popup to open immediately when marker is added to the map
+            setTimeout(() => {
+              e.target.openPopup();
+            }, 100);
+          },
+        }}
       >
-        <Popup closeButton={false} className="rounded-lg shadow-lg border border-gray-200" autoPan={true} minWidth={320} maxWidth={400}>
-          <AddIncidentForm coordinates={tempMarker} onCancel={() => {
+        <Popup closeButton={false} className="rounded-lg shadow-lg border border-gray-200" autoPan={true} minWidth={320} maxWidth={400} closeOnClick={false}>
+          <AddIncidentForm coordinates={newIncidentPosition} onCancel={() => {
             cancelAddingIncident();
-            setTempMarker(null);
           }} />
         </Popup>
       </AnimatedMarker>

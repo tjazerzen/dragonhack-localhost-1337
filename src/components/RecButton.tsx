@@ -91,7 +91,7 @@ export default function RecButton() {
         appendToMessage(currentMessageId, text);
       }
     } 
-  }, [text, addMessage, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession, callGeocodeAgent]);
+  }, [text, addMessage, currentSpeaker, currentMessageId, appendToMessage]);
 
   return (
     <Button 
