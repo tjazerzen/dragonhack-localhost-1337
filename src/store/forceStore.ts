@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Force, ForceStatus } from '@/types/forces';
+import { getRouteFromGoogle } from '@/utils/placesApi';
 
 interface ForceStore {
   forces: Force[];
@@ -7,7 +8,10 @@ interface ForceStore {
   selectForce: (id: string | null) => void;
   updateForceStatus: (id: string, status: ForceStatus) => void;
   updateForceCoordinates: (id: string, coordinates: [number, number]) => void;
-  dispatchForce: (id: string, incidentId: string) => void;
+  dispatchForce: (id: string, incidentId: string, targetCoordinates: [number, number]) => Promise<void>;
+  setRoute: (id: string, route: Array<[number, number]> | null) => void;
+  clearRoute: (id: string) => void;
+  updateRouteTargetIndex: (id: string, index: number) => void;
 }
 
 // Sample force data
@@ -286,29 +290,91 @@ const sampleForces: Force[] = [
   }
 ];
 
-export const useForceStore = create<ForceStore>()((set, get) => ({
+export const useForceStore = create<ForceStore>((set, get) => ({
   forces: sampleForces,
   selectedForceId: null,
   selectForce: (id) => set({ selectedForceId: id }),
-  updateForceStatus: (id, status) => {
-    const { forces } = get();
-    const updatedForces = forces.map(force => 
-      force.id === id ? { ...force, status } : force
-    );
-    set({ forces: updatedForces });
-  },
-  updateForceCoordinates: (id, coordinates) => {
-    const { forces } = get();
-    const updatedForces = forces.map(force => 
-      force.id === id ? { ...force, coordinates } : force
-    );
-    set({ forces: updatedForces });
-  },
-  dispatchForce: (id, incidentId) => set((state) => ({
+  updateForceStatus: (id, status) => set((state) => ({
     forces: state.forces.map((force) =>
-      force.id === id 
-        ? { ...force, status: 'on_road', dispatchedToIncidentId: incidentId } 
-        : force
+      force.id === id ? { ...force, status } : force
     ),
   })),
+  updateForceCoordinates: (id, coordinates) => set((state) => ({
+    forces: state.forces.map((force) =>
+      force.id === id ? { ...force, coordinates } : force
+    ),
+  })),
+  setRoute: (id, route) => set((state) => ({
+    forces: state.forces.map((force) =>
+      force.id === id ? { ...force, route: route, routeTargetIndex: route ? 1 : undefined } : force
+    ),
+  })),
+  clearRoute: (id) => set((state) => ({
+    forces: state.forces.map((force) =>
+      force.id === id ? { ...force, route: null, routeTargetIndex: undefined, dispatchedToIncidentId: null, status: 'idle' } : force
+    ),
+  })),
+  updateRouteTargetIndex: (id, index) => set((state) => ({
+    forces: state.forces.map((force) =>
+      force.id === id ? { ...force, routeTargetIndex: index } : force
+    ),
+  })),
+  dispatchForce: async (id, incidentId, targetCoordinates) => {
+    const force = get().forces.find(f => f.id === id);
+    if (!force) {
+      console.error(`Force ${id} not found for dispatch.`);
+      return;
+    }
+
+    if (force.dispatchedToIncidentId) {
+      console.warn(`Force ${id} is already dispatched to ${force.dispatchedToIncidentId}. Cannot dispatch to ${incidentId}.`);
+      return;
+    }
+
+    console.log(`Fetching route for Force ${id} from ${force.coordinates} to ${targetCoordinates}`);
+    try {
+      const route = await getRouteFromGoogle(force.coordinates, targetCoordinates);
+
+      if (route && route.length > 0) {
+        console.log(`Route fetched successfully for Force ${id}. Points: ${route.length}`);
+        set((state) => ({
+          forces: state.forces.map((f) =>
+            f.id === id ? {
+              ...f,
+              dispatchedToIncidentId: incidentId,
+              route: route,
+              routeTargetIndex: 1,
+              status: 'on_road',
+            } : f
+          ),
+        }));
+      } else {
+        console.warn(`No route found for Force ${id}. Dispatching without route.`);
+        set((state) => ({
+          forces: state.forces.map((f) =>
+            f.id === id ? {
+              ...f,
+              dispatchedToIncidentId: incidentId,
+              route: null,
+              routeTargetIndex: undefined,
+              status: 'on_road',
+            } : f
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error(`Error fetching route for Force ${id}:`, error);
+      set((state) => ({
+        forces: state.forces.map((f) =>
+          f.id === id ? {
+            ...f,
+            dispatchedToIncidentId: incidentId,
+            route: null,
+            routeTargetIndex: undefined,
+            status: 'on_road',
+          } : f
+        ),
+      }));
+    }
+  },
 })); 
