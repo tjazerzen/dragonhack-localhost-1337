@@ -50,38 +50,19 @@ interface PopupContentProps {
   photoUrl: string | null;
   streetViewUrl: string | null;
   isLoading: boolean;
+  onDispatch: (incidentId: string, numPolice: number, numFirefighters: number) => void;
 }
 
-const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetViewUrl, isLoading }) => {
-  // Access forces from the store
-  const forces = useForceStore((state) => state.forces);
+const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetViewUrl, isLoading, onDispatch }) => {
+  // Local state to track input changes before dispatching
+  const [policeSupportNeeded, setPoliceSupportNeeded] = useState(incident.noPoliceSupport);
+  const [firefighterSupportNeeded, setFirefighterSupportNeeded] = useState(incident.noFirefighterSupport);
 
-  const handleDispatch = () => {
-    const incidentCoords = incident.coordinates;
-    const numPolice = incident.noPoliceSupport;
-    const numFirefighters = incident.noFirefighterSupport;
-
-    console.log(`Dispatching ${numPolice} IDLE police and ${numFirefighters} IDLE firefighters for incident ${incident.id} at ${incidentCoords}`);
-
-    // Filter forces by type AND status ('idle')
-    const policeForces = forces.filter(f => f.type === 'police' && f.status === 'idle');
-    const firefighterForces = forces.filter(f => f.type === 'firefighter' && f.status === 'idle');
-
-    const calculateDistances = (forceList: Force[]) => 
-      forceList.map(force => ({
-        ...force,
-        distance: calculateDistance(incidentCoords, force.coordinates)
-      })).sort((a, b) => a.distance - b.distance);
-
-    const closestPolice = calculateDistances(policeForces).slice(0, numPolice);
-    const closestFirefighters = calculateDistances(firefighterForces).slice(0, numFirefighters);
-
-    console.log("Closest IDLE Police Units:", closestPolice.map(f => ({ id: f.id, callsign: f.callsign, coordinates: f.coordinates, distance: f.distance })));
-    console.log("Closest IDLE Firefighter Units:", closestFirefighters.map(f => ({ id: f.id, callsign: f.callsign, coordinates: f.coordinates, distance: f.distance })));
-    
-    // Here you would typically update the status of dispatched units, 
-    // potentially trigger API calls, etc.
-  };
+  // Update local state when incident prop changes (e.g., when opening a different popup)
+  useEffect(() => {
+    setPoliceSupportNeeded(incident.noPoliceSupport);
+    setFirefighterSupportNeeded(incident.noFirefighterSupport);
+  }, [incident.noPoliceSupport, incident.noFirefighterSupport]);
 
   return (
     <div className="w-full max-w-md">
@@ -153,10 +134,10 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
           <input 
             type="number"
             min="0"
-            defaultValue={incident.noPoliceSupport}
+            value={policeSupportNeeded}
             onChange={(e) => {
               const newValue = Math.max(0, parseInt(e.target.value) || 0);
-              incident.noPoliceSupport = newValue;
+              setPoliceSupportNeeded(newValue);
             }}
             className="w-full px-2 py-1 border rounded text-sm"
           />
@@ -166,10 +147,10 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
           <input 
             type="number"
             min="0"
-            defaultValue={incident.noFirefighterSupport}
+            value={firefighterSupportNeeded}
             onChange={(e) => {
               const newValue = Math.max(0, parseInt(e.target.value) || 0);
-              incident.noFirefighterSupport = newValue;
+              setFirefighterSupportNeeded(newValue);
             }}
             className="w-full px-2 py-1 border rounded text-sm"
           />
@@ -186,7 +167,7 @@ const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetV
       <div className="mt-2 text-right">
         <button 
           className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs"
-          onClick={handleDispatch}
+          onClick={() => onDispatch(incident.id, policeSupportNeeded, firefighterSupportNeeded)}
         >
           Dispatch
         </button>
@@ -488,8 +469,8 @@ const ForcePopupContent: React.FC<ForcePopupContentProps> = ({ force }) => (
   <div className="w-full">
     <div className="flex items-center justify-between border-b pb-2 mb-2">
       <h3 className="font-medium text-lg">{force.type === 'police' ? 'Police Unit' : 'Fire Unit'}</h3>
-      <span className={`${force.status === 'idle' ? 'bg-gray-500' : 'bg-blue-500'} text-white px-2 py-1 rounded text-xs font-bold`}>
-        {force.status === 'idle' ? 'IDLE' : 'ON ROAD'}
+      <span className={`${force.dispatchedToIncidentId ? 'bg-yellow-500' : (force.status === 'idle' ? 'bg-gray-500' : 'bg-blue-500')} text-white px-2 py-1 rounded text-xs font-bold`}>
+        {force.dispatchedToIncidentId ? 'DISPATCHED' : (force.status === 'idle' ? 'IDLE' : 'ON ROAD')}
       </span>
     </div>
     
@@ -503,6 +484,12 @@ const ForcePopupContent: React.FC<ForcePopupContentProps> = ({ force }) => (
         <div>{force.location}</div>
       </div>
     </div>
+    {force.dispatchedToIncidentId && (
+       <div className="mt-1">
+         <div className="text-gray-500 text-xs">Dispatched To Incident ID</div>
+         <div>{force.dispatchedToIncidentId}</div>
+       </div>
+    )}
   </div>
 );
 
@@ -516,12 +503,16 @@ function LeafletAnimationStyles() {
       .leaflet-marker-icon {
         transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
                    left 1.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                   top 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+                   top 1.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+                   width 0.3s ease,
+                   height 0.3s ease !important;
       }
       .leaflet-marker-shadow {
         transition: transform 1.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
                    left 1.2s cubic-bezier(0.25, 0.8, 0.25, 1), 
-                   top 1.2s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+                   top 1.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+                   width 0.3s ease,
+                   height 0.3s ease !important;
       }
     `;
     
@@ -546,6 +537,7 @@ function MapContent({
   forces,
   handleMarkerClick,
   handleForceClick,
+  handleDispatchUnits,
   photoUrls, 
   streetViewUrls, 
   selectedIncident, 
@@ -560,6 +552,7 @@ function MapContent({
   forces: Force[];
   handleMarkerClick: (incident: Incident) => void;
   handleForceClick: (force: Force) => void;
+  handleDispatchUnits: (incidentId: string, numPolice: number, numFirefighters: number) => void;
   photoUrls: Record<string, string | null>;
   streetViewUrls: Record<string, string | null>;
   selectedIncident: Incident | null;
@@ -640,6 +633,7 @@ function MapContent({
               photoUrl={photoUrls[incident.id]} 
               streetViewUrl={streetViewUrls[incident.id]}
               isLoading={isLoading && selectedIncident?.id === incident.id}
+              onDispatch={handleDispatchUnits}
             />
           </Popup>
         </AnimatedMarker>
@@ -660,33 +654,38 @@ function MapContent({
       ))}
       
       {/* Display forces */}
-      {forces.map((force) => (
-        <AnimatedMarker
-          key={`force-${force.id}`}
-          position={force.coordinates}
-          icon={L.icon({
-            iconUrl: forceIcons[force.type][force.status],
-            iconSize: [33, 33],
-            iconAnchor: [11, 11],
-            popupAnchor: [0, -11],
-          })}
-          eventHandlers={{
-            click: () => handleForceClick(force),
-            // Store reference to the force marker
-            add: (e) => markerRefs.current[`force-${force.id}`] = e.target,
-            // Add popupclose handler
-            popupclose: () => {
-              if (selectedForceId === force.id) {
-                selectForce(null); // Clear selection when popup is closed manually
+      {forces.map((force) => {
+        const isDispatched = !!force.dispatchedToIncidentId;
+        const iconSize: [number, number] = isDispatched ? [45, 45] : [33, 33];
+        const iconAnchor: [number, number] = isDispatched ? [15, 15] : [11, 11];
+        const popupAnchor: [number, number] = isDispatched ? [0, -15] : [0, -11];
+
+        return (
+          <AnimatedMarker
+            key={`force-${force.id}`}
+            position={force.coordinates}
+            icon={L.icon({
+              iconUrl: forceIcons[force.type][force.status],
+              iconSize: iconSize,
+              iconAnchor: iconAnchor,
+              popupAnchor: popupAnchor,
+            })}
+            eventHandlers={{
+              click: () => handleForceClick(force),
+              add: (e) => markerRefs.current[`force-${force.id}`] = e.target,
+              popupclose: () => {
+                if (selectedForceId === force.id) {
+                  selectForce(null);
+                }
               }
-            }
-          }}
-        >
-          <Popup className="rounded-lg shadow-lg border border-gray-200" minWidth={220}>
-            <ForcePopupContent force={force} />
-          </Popup>
-        </AnimatedMarker>
-      ))}
+            }}
+          >
+            <Popup className="rounded-lg shadow-lg border border-gray-200" minWidth={220}>
+              <ForcePopupContent force={force} />
+            </Popup>
+          </AnimatedMarker>
+        );
+      })}
     </>
   );
 }
@@ -701,6 +700,7 @@ export default function Map({ position }: MapProps) {
   const selectForce = useForceStore((state) => state.selectForce);
   const selectedForceId = useForceStore((state) => state.selectedForceId);
   const updateForceCoordinates = useForceStore((state) => state.updateForceCoordinates);
+  const dispatchForce = useForceStore((state) => state.dispatchForce);
   
   const [photoUrls, setPhotoUrls] = useState<Record<string, string | null>>({});
   const [streetViewUrls, setStreetViewUrls] = useState<Record<string, string | null>>({});
@@ -743,10 +743,9 @@ export default function Map({ position }: MapProps) {
             lat: Math.sin(angle) * 0.00045, // 50% faster (0.0003 * 1.5)
             lng: Math.cos(angle) * 0.00045 
           };
-          
-          // Initialize history with current position
-          initialHistory[force.id] = [force.coordinates];
         }
+        // Initialize history for ALL forces
+        initialHistory[force.id] = [force.coordinates];
       });
       
       setForceDirections(initialDirections);
@@ -758,9 +757,7 @@ export default function Map({ position }: MapProps) {
       const updatedHistory = { ...forceHistory };
       
       forces.forEach(force => {
-        // Only move forces that are on_road
         if (force.status === 'on_road') {
-          // Get current direction or generate a new one
           let direction = updatedDirections[force.id];
           
           if (!direction) {
@@ -771,7 +768,6 @@ export default function Map({ position }: MapProps) {
             };
           }
           
-          // Randomly adjust direction slightly (5% chance to change direction)
           if (Math.random() < 0.05) {
             const angle = Math.random() * Math.PI * 2;
             const newDirection = {
@@ -779,32 +775,30 @@ export default function Map({ position }: MapProps) {
               lng: Math.cos(angle) * 0.00045
             };
             
-            // Smooth transition to new direction (blend old and new)
             direction = {
               lat: direction.lat * 0.7 + newDirection.lat * 0.3,
               lng: direction.lng * 0.7 + newDirection.lng * 0.3
             };
           }
           
-          // Calculate new coordinates
           const newLat = force.coordinates[0] + direction.lat;
           const newLng = force.coordinates[1] + direction.lng;
           
-          // Update force coordinates
           updateForceCoordinates(force.id, [newLat, newLng]);
           
-          // Save updated direction
           updatedDirections[force.id] = direction;
           
-          // Update position history (keep last 5 positions)
-          if (!updatedHistory[force.id]) {
-            updatedHistory[force.id] = [];
-          }
-          
           updatedHistory[force.id] = [
-            [newLat, newLng],
-            ...updatedHistory[force.id].slice(0, 4)
+            [newLat, newLng], 
+            ...(updatedHistory[force.id] || []).slice(0, 4)
           ];
+        } else {
+          if (!updatedHistory[force.id] || updatedHistory[force.id][0] !== force.coordinates) {
+             updatedHistory[force.id] = [force.coordinates];
+          }
+          if (updatedDirections[force.id]) {
+            delete updatedDirections[force.id];
+          }
         }
       });
       
@@ -812,10 +806,8 @@ export default function Map({ position }: MapProps) {
       setForceHistory(updatedHistory);
     };
     
-    // Update less frequently since we have CSS transitions to handle the animation
     const intervalId = setInterval(moveForces, 1500);
     
-    // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, [forces, updateForceCoordinates, isMovementEnabled, forceDirections, forceHistory]);
 
@@ -903,7 +895,10 @@ export default function Map({ position }: MapProps) {
     }
     
     if (selectedForceStatuses.length > 0) {
-      filtered = filtered.filter(force => selectedForceStatuses.includes(force.status));
+      filtered = filtered.filter(force => {
+          return selectedForceStatuses.includes(force.status) || 
+                 (selectedForceStatuses.includes('on_road') && !!force.dispatchedToIncidentId);
+      });
     }
     
     return filtered;
@@ -962,6 +957,35 @@ export default function Map({ position }: MapProps) {
   const handleForceClick = (force: Force) => {
     console.log('Force clicked:', force);
     selectForce(force.id);
+  };
+
+  const handleDispatchUnits = (incidentId: string, numPolice: number, numFirefighters: number) => {
+    const incident = incidents.find(inc => inc.id === incidentId);
+    if (!incident) {
+      console.error(`Incident ${incidentId} not found for dispatch.`);
+      return;
+    }
+
+    const incidentCoords = incident.coordinates;
+    console.log(`Dispatching ${numPolice} IDLE police and ${numFirefighters} IDLE firefighters for incident ${incident.id} at ${incidentCoords}`);
+
+    const availablePolice = forces.filter(f => f.type === 'police' && f.status === 'idle' && !f.dispatchedToIncidentId);
+    const availableFirefighters = forces.filter(f => f.type === 'firefighter' && f.status === 'idle' && !f.dispatchedToIncidentId);
+
+    const calculateDistances = (forceList: Force[]) => 
+      forceList.map(force => ({
+        ...force,
+        distance: calculateDistance(incidentCoords, force.coordinates)
+      })).sort((a, b) => a.distance - b.distance);
+
+    const closestPolice = calculateDistances(availablePolice).slice(0, numPolice);
+    const closestFirefighters = calculateDistances(availableFirefighters).slice(0, numFirefighters);
+
+    console.log("Dispatching Police Units:", closestPolice.map(f => ({ id: f.id, callsign: f.callsign, distance: f.distance })));
+    console.log("Dispatching Firefighter Units:", closestFirefighters.map(f => ({ id: f.id, callsign: f.callsign, distance: f.distance })));
+    
+    closestPolice.forEach(force => dispatchForce(force.id, incidentId));
+    closestFirefighters.forEach(force => dispatchForce(force.id, incidentId));
   };
 
   return (
@@ -1026,6 +1050,7 @@ export default function Map({ position }: MapProps) {
             forces={filteredForces}
             handleMarkerClick={handleMarkerClick}
             handleForceClick={handleForceClick}
+            handleDispatchUnits={handleDispatchUnits}
             photoUrls={photoUrls}
             streetViewUrls={streetViewUrls}
             selectedIncident={selectedIncident}

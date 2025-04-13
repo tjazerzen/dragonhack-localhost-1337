@@ -7,6 +7,7 @@ interface ForceStore {
   selectForce: (id: string | null) => void;
   updateForceStatus: (id: string, status: ForceStatus) => void;
   updateForceCoordinates: (id: string, coordinates: [number, number]) => void;
+  dispatchForce: (id: string, incidentId: string) => void;
 }
 
 // Sample force data
@@ -302,5 +303,12 @@ export const useForceStore = create<ForceStore>()((set, get) => ({
       force.id === id ? { ...force, coordinates } : force
     );
     set({ forces: updatedForces });
-  }
+  },
+  dispatchForce: (id, incidentId) => set((state) => ({
+    forces: state.forces.map((force) =>
+      force.id === id 
+        ? { ...force, status: 'on_road', dispatchedToIncidentId: incidentId } 
+        : force
+    ),
+  })),
 })); 

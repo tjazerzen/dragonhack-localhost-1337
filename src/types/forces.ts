@@ -9,4 +9,5 @@ export interface Force {
   location: string;
   coordinates: [number, number]; // [latitude, longitude]
   callsign: string; // Identifier like "Unit-1" or "Engine-3"
+  dispatchedToIncidentId?: string | null; // ID of the incident the unit is dispatched to
 } 
