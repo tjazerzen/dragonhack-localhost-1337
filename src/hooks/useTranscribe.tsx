@@ -60,12 +60,15 @@ export default function useTranscribe() {
         - slovenska
         - avtocesta
         - Čopova
+        - DragonHack
 
         ## Important roads
 
         - Slovenska cesta
+        - Celovška cesta
         - Trubarjeva cesta
-        - Copova cesta
+        - Čopova cesta
+        - Tržaška cesta
       `,
       onFinished: () => {
         console.log('transcription finished');
