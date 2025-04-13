@@ -273,7 +273,7 @@ function AddIncidentMapEvents() {
           },
         }}
       >
-        <Popup closeButton={false} className="rounded-lg shadow-lg border border-gray-200" autoPan={true} minWidth={320} maxWidth={400} closeOnClick={false}>
+        <Popup closeButton={false} className="rounded-lg shadow-lg border border-gray-200" autoPan={true} autoPanPadding={L.point(50, 150)} minWidth={320} maxWidth={400} closeOnClick={false}>
           <AddIncidentForm coordinates={newIncidentPosition} onCancel={() => {
             cancelAddingIncident();
           }} />
