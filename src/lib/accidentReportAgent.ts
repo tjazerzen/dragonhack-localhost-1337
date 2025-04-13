@@ -30,8 +30,8 @@ Transcript:
 
 Required JSON Output Format:
 {{
-  "noPoliceSupport": <number | undefined> (Estimate police units needed, 0 if none),
-  "noFirefighterSupport": <number | undefined> (Estimate firefighter units needed, 0 if none),
+  "noPoliceSupport": <number | undefined> (Estimate police units needed(between 0 and 6), 0 if none),
+  "noFirefighterSupport": <number | undefined> (Estimate firefighter units needed(between 0 and 6), 0 if none),
   "summary": <string> (Concise incident summary),
   "location_description": <string> (Textual location description),
   "status": <"Critical" | "Moderate"> (Incident severity),
