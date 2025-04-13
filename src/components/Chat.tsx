@@ -26,7 +26,7 @@ export default function Chat() {
     <div className="flex flex-col h-full bg-sidebar">
       <div className="border-b flex items-center">
         <button 
-          className="h-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 text-sm font-medium flex flex-1 items-center justify-center gap-1"
+          className="h-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 text-sm font-medium flex w-1/2 items-center justify-center gap-1"
           onClick={startAddingIncident}
         >
           <FaPlus size={12} />
