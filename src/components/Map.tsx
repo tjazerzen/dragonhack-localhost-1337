@@ -273,7 +273,7 @@ function AddIncidentMapEvents() {
           },
         }}
       >
-        <Popup closeButton={false} className="rounded-lg shadow-lg border border-gray-200" autoPan={true} autoPanPadding={L.point(50, 150)} minWidth={320} maxWidth={400} closeOnClick={false}>
+        <Popup closeButton={false} className="rounded-lg shadow-lg border border-gray-200" autoPan={true} autoPanPadding={L.point(50, 150)} closeOnClick={false} minWidth={350}>
           <AddIncidentForm coordinates={newIncidentPosition} onCancel={() => {
             cancelAddingIncident();
           }} />
@@ -323,7 +323,7 @@ function AddIncidentForm({ coordinates, onCancel }: AddIncidentFormProps) {
   };
   
   return (
-    <form onSubmit={handleSubmit} className="w-48">
+    <form onSubmit={handleSubmit} className="w-full">
       <h3 className="font-medium text-lg mb-2">Add New Incident</h3>
       
       <div className="mb-2">
