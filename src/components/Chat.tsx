@@ -25,29 +25,37 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-        {messages.map((message: Message) => (
-          <div
-            key={message.id}
-            className={`flex ${
-              message.sender === 'admin' ? 'justify-end' : 'justify-start'
-            }`}
-          >
+        {messages.length === 0 ? (
+          <div className="flex justify-center items-center h-full">
+            <p className="text-gray-500 text-sm italic">
+              Conversation transcript will appear here.
+            </p>
+          </div>
+        ) : (
+          messages.map((message: Message) => (
             <div
-              className={`max-w-[70%] rounded-3xl p-3 ${
-                message.sender === 'admin'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-800'
+              key={message.id}
+              className={`flex ${
+                message.sender === 'admin' ? 'justify-end' : 'justify-start'
               }`}
             >
-              <p className="text-sm">
-                {message.content}
-              </p>
-              <p className="text-xs mt-1 opacity-70">
-                {message.timestamp.toLocaleTimeString()}
-              </p>
+              <div
+                className={`max-w-[70%] rounded-3xl p-3 ${
+                  message.sender === 'admin'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-800'
+                }`}
+              >
+                <p className="text-sm">
+                  {message.content}
+                </p>
+                <p className="text-xs mt-1 opacity-70">
+                  {message.timestamp.toLocaleTimeString()}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
       <div className="border-t flex items-center">
