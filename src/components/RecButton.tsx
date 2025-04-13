@@ -2,7 +2,7 @@
 
 import { Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import useTranscribe from '@/hooks/useTranscribe';
 import { useChatStore } from '@/store/chatStore';
@@ -17,6 +17,7 @@ export default function RecButton() {
   const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const setExtractedCoordinates = useIncidentStore((state) => state.setExtractedCoordinates);
   const [coordinatesFoundThisSession, setCoordinatesFoundThisSession] = useState(false);
+  const lastProcessedText = useRef<string>('');
 
   const callGeocodeAgent = async () => {
     if (coordinatesFoundThisSession) {
@@ -106,9 +107,10 @@ export default function RecButton() {
   }, [isRecording, startTranscription, stopTranscription]);
 
   useEffect(() => {
-    if (text) {
-      const match = text.match(/spk:(\d+)([\s\S]*)/);
+    if (text && text !== lastProcessedText.current) {
       console.log('tokenized text: ', text);
+      const match = text.match(/spk:(\d+)(.*)/);
+      console.log('match: ', match);
       if (match) {
         const [, speakerNumber, content] = match;
         const newSpeaker = speakerNumber === '1' ? 'admin' : 'caller';
@@ -124,8 +126,9 @@ export default function RecButton() {
       } else if (currentMessageId) {
         appendToMessage(currentMessageId, text);
       }
-    } 
-  }, [text, currentSpeaker, currentMessageId, appendToMessage, setExtractedCoordinates, coordinatesFoundThisSession]);
+      lastProcessedText.current = text;
+    }
+  }, [text, currentSpeaker, currentMessageId, addMessage, appendToMessage, callGeocodeAgent]);
 
   return (
     <Button 
