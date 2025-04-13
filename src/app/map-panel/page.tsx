@@ -20,8 +20,8 @@ export default function MapPanel() {
   const isIncidentPanelCollapsed = useLayoutStore((state) => state.isIncidentPanelCollapsed);
   const activeSidePanel = useLayoutStore((state) => state.activeSidePanel);
   const position: LatLngExpression = [46.061583, 14.507542];
-  const [sidebarWidth, setSidebarWidth] = useState(400);
-  const [chatSidebarWidth, setChatSidebarWidth] = useState(400);
+  const [sidebarWidth, setSidebarWidth] = useState(350);
+  const [chatSidebarWidth, setChatSidebarWidth] = useState(350);
 
   // Render the appropriate panel based on the active side panel type
   const renderSidePanel = () => {
