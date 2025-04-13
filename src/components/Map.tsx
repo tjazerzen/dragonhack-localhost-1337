@@ -15,6 +15,39 @@ import { getNearestPhotoUrl, getStreetViewUrl } from '../utils/placesApi';
 import styled from 'styled-components';
 import { statusIcons } from '@/utils/mapUtils';
 
+// Utility function to calculate distance between two coordinates using Haversine formula
+function calculateDistance(coord1: [number, number], coord2: [number, number]): number {
+  const R = 6371; // Earth's radius in km
+  const lat1 = coord1[0] * Math.PI / 180;
+  const lat2 = coord2[0] * Math.PI / 180;
+  const deltaLat = (coord2[0] - coord1[0]) * Math.PI / 180;
+  const deltaLon = (coord2[1] - coord1[1]) * Math.PI / 180;
+
+  const a = Math.sin(deltaLat/2) * Math.sin(deltaLat/2) +
+           Math.cos(lat1) * Math.cos(lat2) *
+           Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Function to find closest forces of specified type and quantity
+function findClosestForces(forces: Force[], coordinates: [number, number], type: 'police' | 'firefighter', count: number): Force[] {
+  // Filter forces by type
+  const filteredForces = forces.filter(force => force.type === type);
+  
+  // Calculate distance for each force
+  const forcesWithDistance = filteredForces.map(force => ({
+    ...force,
+    distance: calculateDistance(coordinates, force.coordinates)
+  }));
+  
+  // Sort by distance (closest first)
+  const sortedForces = forcesWithDistance.sort((a, b) => a.distance - b.distance);
+  
+  // Return the requested number of forces (or all available if less than requested)
+  return sortedForces.slice(0, count);
+}
+
 // Create a styled version of the Leaflet Marker with CSS transition for smooth movement
 const AnimatedMarker = styled(LeafletMarker)`
   transition: transform 1.2s ease;
@@ -43,113 +76,187 @@ interface PopupContentProps {
   isLoading: boolean;
 }
 
-const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetViewUrl, isLoading }) => (
-  <div className="w-full max-w-md">
-    <div className="relative">
-      <div className="flex items-center justify-between border-b pb-2 mb-2">
-        <h3 className="font-medium text-lg">{incident.summary}</h3>
-        <span className={`${statusBgColors[incident.status]} text-white px-2 py-1 rounded text-xs font-bold`}>
-          {incident.status.toUpperCase()}
-        </span>
+const PopupContent: React.FC<PopupContentProps> = ({ incident, photoUrl, streetViewUrl, isLoading }) => {
+  const forces = useForceStore((state) => state.forces);
+  const [dispatchResults, setDispatchResults] = useState<{
+    police: Force[],
+    firefighters: Force[]
+  } | null>(null);
+
+  const handleDispatch = () => {
+    // Find closest police and firefighter units as per requested counts
+    const closestPolice = findClosestForces(
+      forces, 
+      incident.coordinates, 
+      'police', 
+      incident.noPoliceSupport
+    );
+    
+    const closestFirefighters = findClosestForces(
+      forces, 
+      incident.coordinates, 
+      'firefighter', 
+      incident.noFirefighterSupport
+    );
+
+    // Save the results
+    setDispatchResults({
+      police: closestPolice,
+      firefighters: closestFirefighters
+    });
+
+    // Log the coordinates to console
+    console.log('Dispatched units to incident:', incident.summary);
+    console.log('Incident coordinates:', incident.coordinates);
+    console.log('Police units dispatched:', closestPolice.map(p => ({
+      callsign: p.callsign,
+      coordinates: p.coordinates,
+      distance: calculateDistance(incident.coordinates, p.coordinates).toFixed(2) + ' km'
+    })));
+    console.log('Firefighter units dispatched:', closestFirefighters.map(f => ({
+      callsign: f.callsign,
+      coordinates: f.coordinates,
+      distance: calculateDistance(incident.coordinates, f.coordinates).toFixed(2) + ' km'
+    })));
+  };
+
+  return (
+    <div className="w-full max-w-md">
+      <div className="relative">
+        <div className="flex items-center justify-between border-b pb-2 mb-2">
+          <h3 className="font-medium text-lg">{incident.summary}</h3>
+          <span className={`${statusBgColors[incident.status]} text-white px-2 py-1 rounded text-xs font-bold`}>
+            {incident.status.toUpperCase()}
+          </span>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="h-48 flex items-center justify-center bg-gray-100 rounded-lg">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600"></div>
+        </div>
+      ) : (
+        <div className="mb-3 space-y-2">
+          {photoUrl && (
+            <div>
+              <div className="text-gray-500 text-xs mb-1">Map View</div>
+              <img
+                src={photoUrl}
+                alt="Location map"
+                className="w-full h-40 object-cover rounded-lg"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+
+          {streetViewUrl && (
+            <div>
+              <div className="text-gray-500 text-xs mb-1">Street View</div>
+              <img
+                src={streetViewUrl}
+                alt="Street view"
+                className="w-full h-40 object-cover rounded-lg"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
+        <div>
+          <div className="text-gray-500 text-xs">Type</div>
+          <div>{incident.type.replace('_', ' ')}</div>
+        </div>
+        <div>
+          <div className="text-gray-500 text-xs">Time</div>
+          <div>{incident.timestamp}</div>
+        </div>
+        <div>
+          <div className="text-gray-500 text-xs">Location</div>
+          <div>{incident.location}</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div>
+          <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
+          <input
+            type="number"
+            min="0"
+            value={incident.noPoliceSupport}
+            onChange={(e) => {
+              const newValue = Math.max(0, parseInt(e.target.value) || 0);
+              incident.noPoliceSupport = newValue;
+            }}
+            className="w-full px-2 py-1 border rounded text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
+          <input
+            type="number"
+            min="0"
+            value={incident.noFirefighterSupport}
+            onChange={(e) => {
+              const newValue = Math.max(0, parseInt(e.target.value) || 0);
+              incident.noFirefighterSupport = newValue;
+            }}
+            className="w-full px-2 py-1 border rounded text-sm"
+          />
+        </div>
+      </div>
+
+      <div>
+        <div className="text-gray-500 text-xs">Summary</div>
+        <p className="text-sm">
+          {incident.summary}
+        </p>
+      </div>
+
+      {dispatchResults && (
+        <div className="mt-3 text-sm">
+          <div className="text-gray-600 font-medium">Dispatched Units:</div>
+          {dispatchResults.police.length > 0 && (
+            <div className="mt-1">
+              <div className="text-blue-600 font-medium">Police ({dispatchResults.police.length}):</div>
+              {dispatchResults.police.map(unit => (
+                <div key={unit.id} className="text-xs mt-1">
+                  {unit.callsign} - {calculateDistance(incident.coordinates, unit.coordinates).toFixed(2)} km
+                </div>
+              ))}
+            </div>
+          )}
+          {dispatchResults.firefighters.length > 0 && (
+            <div className="mt-1">
+              <div className="text-red-600 font-medium">Firefighters ({dispatchResults.firefighters.length}):</div>
+              {dispatchResults.firefighters.map(unit => (
+                <div key={unit.id} className="text-xs mt-1">
+                  {unit.callsign} - {calculateDistance(incident.coordinates, unit.coordinates).toFixed(2)} km
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="mt-2 text-right">
+        <button 
+          className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs hover:bg-blue-700"
+          onClick={handleDispatch}
+        >
+          Dispatch
+        </button>
       </div>
     </div>
-
-    {isLoading ? (
-      <div className="h-48 flex items-center justify-center bg-gray-100 rounded-lg">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600"></div>
-      </div>
-    ) : (
-      <div className="mb-3 space-y-2">
-        {photoUrl && (
-          <div>
-            <div className="text-gray-500 text-xs mb-1">Map View</div>
-            <img
-              src={photoUrl}
-              alt="Location map"
-              className="w-full h-40 object-cover rounded-lg"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-          </div>
-        )}
-
-        {streetViewUrl && (
-          <div>
-            <div className="text-gray-500 text-xs mb-1">Street View</div>
-            <img
-              src={streetViewUrl}
-              alt="Street view"
-              className="w-full h-40 object-cover rounded-lg"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-          </div>
-        )}
-      </div>
-    )}
-
-    <div className="grid grid-cols-3 gap-2 mb-3 text-sm">
-      <div>
-        <div className="text-gray-500 text-xs">Type</div>
-        <div>{incident.type.replace('_', ' ')}</div>
-      </div>
-      <div>
-        <div className="text-gray-500 text-xs">Time</div>
-        <div>{incident.timestamp}</div>
-      </div>
-      <div>
-        <div className="text-gray-500 text-xs">Location</div>
-        <div>{incident.location}</div>
-      </div>
-    </div>
-
-    <div className="grid grid-cols-2 gap-2 mb-3">
-      <div>
-        <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Police Support</label>
-        <input
-          type="number"
-          min="0"
-          value={incident.noPoliceSupport}
-          onChange={(e) => {
-            const newValue = Math.max(0, parseInt(e.target.value) || 0);
-            incident.noPoliceSupport = newValue;
-          }}
-          className="w-full px-2 py-1 border rounded text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-gray-700 text-xs mb-1 whitespace-nowrap">Firefighter Support</label>
-        <input
-          type="number"
-          min="0"
-          value={incident.noFirefighterSupport}
-          onChange={(e) => {
-            const newValue = Math.max(0, parseInt(e.target.value) || 0);
-            incident.noFirefighterSupport = newValue;
-          }}
-          className="w-full px-2 py-1 border rounded text-sm"
-        />
-      </div>
-    </div>
-
-    <div>
-      <div className="text-gray-500 text-xs">Summary</div>
-      <p className="text-sm">
-        {incident.summary}
-      </p>
-    </div>
-
-    <div className="mt-2 text-right">
-      <button className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs">
-        Play
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 // Create a context for marker references
 const MarkerContext = createContext<React.MutableRefObject<Record<string, L.Marker>>>({
